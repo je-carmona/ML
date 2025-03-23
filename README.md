@@ -285,3 +285,59 @@ Desarrollado por: J.E. Carmona-Álvarez
         print("Desarrollado por: J.E. Carmona-Álvarez")
 
 ![image](https://github.com/user-attachments/assets/d2fcca9a-830e-40f4-a529-9c9469a554f4)
+
+**TAREA 5: Decision Tree**
+_Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBweKxPSowAGShuSRq?usp=sharing_
+
+**5.1. Make the Decision Tree algorithm for categories**
+        import numpy as np
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.model_selection import train_test_split
+        from sklearn.tree import DecisionTreeClassifier
+        from sklearn.metrics import accuracy_score, classification_report
+        import matplotlib.pyplot as plt
+        from sklearn.tree import plot_tree
+        
+        # Datos en formato numpy
+        data = np.array([
+            ["G", "G", "R", "E"],
+            ["R", "G", "B", "M"],
+            ["B", "R", "G", "A"],
+            ["G", "R", "G", "E"],
+            ["R", "B", "R", "A"],
+            ["G", "G", "G", "E"],
+            ["B", "G", "R", "M"],
+            ["R", "R", "R", "M"],
+            ["G", "B", "G", "A"],
+            ["B", "B", "B", "A"]
+        ])
+        
+        # Separar características (X) y variable objetivo (y)
+        X = data[:, :-1]  # Las 3 primeras columnas (Ma, Sc, En)
+        y = data[:, -1]   # Última columna (Pc)
+        
+        # Codificar datos categóricos a números correctamente
+        label_encoders = [LabelEncoder() for _ in range(X.shape[1])]  # Un encoder por cada columna
+        X_encoded = np.array([le.fit_transform(X[:, i]) for i, le in enumerate(label_encoders)]).T
+        
+        # Codificar la variable objetivo
+        encoder_y = LabelEncoder()
+        y_encoded = encoder_y.fit_transform(y)
+        
+        # Dividir en entrenamiento y prueba
+        X_train, X_test, y_train, y_test = train_test_split(X_encoded, y_encoded, test_size=0.3, random_state=42)
+        
+        # Entrenar el modelo
+        clf = DecisionTreeClassifier(criterion="entropy", random_state=42)
+        clf.fit(X_train, y_train)
+        
+        # Visualizar el árbol de decisión
+        plt.figure(figsize=(10, 6))
+        plot_tree(clf, feature_names=["Ma", "Sc", "En"], class_names=encoder_y.classes_, filled=True)
+        plt.show()
+        
+        print("")
+        print("Desarrollado por: J.E. Carmona-Álvarez")
+
+![image](https://github.com/user-attachments/assets/86b87e41-7e03-4aec-ac39-7a0f823eb138)
+
