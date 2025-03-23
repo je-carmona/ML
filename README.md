@@ -195,6 +195,7 @@ shape: (12, 5)
 ![image](https://github.com/user-attachments/assets/b5ef7822-762c-4b22-8e33-1936144fb109)
 
 **TAREA 4: Hopfield y PCA**
+
 _Enlace Google Colab: https://colab.research.google.com/drive/1iepq3SXvebYm8RyG2JskDBIjOCC_orOZ?usp=sharing_
 
 **4.1. Buscar el recorrido por todas las ciudades que demore menos tiempo, sin repetir ciudad utilizando redes de Hopfield**
@@ -287,17 +288,32 @@ Desarrollado por: J.E. Carmona-Álvarez
 ![image](https://github.com/user-attachments/assets/d2fcca9a-830e-40f4-a529-9c9469a554f4)
 
 **TAREA 5: Decision Tree**
+
 _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBweKxPSowAGShuSRq?usp=sharing_
 
 **5.1. Make the Decision Tree algorithm for categories**
 
+        #Manejo de arreglos y matrices numéricas
         import numpy as np
+        
+        #Sk Learn Algoritmos de Machine Learning, preprocesamiento y métricas
+        #Convierte datos categóricos en números
         from sklearn.preprocessing import LabelEncoder
+        #Divide los datos en entrenamiento y prueba
         from sklearn.model_selection import train_test_split
+        #Modelo de Árbol de Decisión
         from sklearn.tree import DecisionTreeClassifier
-        from sklearn.metrics import accuracy_score, classification_report
+        #Mide la precisión del modelo
+        from sklearn.metrics import accuracy_score
+        #Muestra métricas de rendimiento
+        from sklearn.metrics import classification_report
+        
+        #Graficar el árbol de decisión
         import matplotlib.pyplot as plt
+        #Dibuja el árbol de decisión
         from sklearn.tree import plot_tree
+        #Tiene algoritmos de herramientas estadísticas avanzadas
+        from scipy.stats import entropy
         
         # Datos en formato numpy
         data = np.array([
@@ -314,8 +330,17 @@ _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBw
         ])
         
         # Separar características (X) y variable objetivo (y)
-        X = data[:, :-1]  # Las 3 primeras columnas (Ma, Sc, En)
-        y = data[:, -1]   # Última columna (Pc)
+        # Las 3 primeras columnas representan las caliicaciones de las asignaturas Matemáticas (Ma), Ciencias (Sc), e Ingles (En)
+        X = data[:, :-1]  
+        # La última columna representa las preferencias de las carreras (Pc)
+        y = data[:, -1]   
+        
+        # Cálculo de la entropía antes de construir el árbol
+        unique, counts = np.unique(y, return_counts=True)
+        probabilities = counts / counts.sum()
+        H = entropy(probabilities, base=2)
+        print("Entropía del conjunto de datos:", H)
+        print("")
         
         # Codificar datos categóricos a números correctamente
         label_encoders = [LabelEncoder() for _ in range(X.shape[1])]  # Un encoder por cada columna
@@ -333,12 +358,73 @@ _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBw
         clf.fit(X_train, y_train)
         
         # Visualizar el árbol de decisión
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(14, 6))
         plot_tree(clf, feature_names=["Ma", "Sc", "En"], class_names=encoder_y.classes_, filled=True)
         plt.show()
         
         print("")
         print("Desarrollado por: J.E. Carmona-Álvarez")
 
-![image](https://github.com/user-attachments/assets/86b87e41-7e03-4aec-ac39-7a0f823eb138)
+![image](https://github.com/user-attachments/assets/f06202e4-aee7-4538-8efd-58b8fd9e75df)
+
+**5.2. Explore the scikit-learn algorithms**
+
+ _**5.2.1. DecisionTreeClassifier**_
+        import numpy as np
+        import pandas as pd
+        from sklearn.tree import DecisionTreeClassifier, plot_tree
+        from sklearn.preprocessing import LabelEncoder
+        import matplotlib.pyplot as plt
+        
+        # Datos originales
+        data = [
+            ["G", "G", "R", "E"],
+            ["R", "G", "B", "M"],
+            ["B", "R", "G", "A"],
+            ["G", "R", "G", "E"],
+            ["R", "B", "R", "A"],
+            ["G", "G", "G", "E"],
+            ["B", "G", "R", "M"],
+            ["R", "R", "R", "M"],
+            ["G", "B", "G", "A"],
+            ["B", "B", "B", "A"]
+        ]
+        
+        # Convertir los datos en un DataFrame
+        df = pd.DataFrame(data, columns=["Matemáticas", "Ciencias", "Ingles", "Carrera"])
+        
+        # Usar LabelEncoder para convertir las letras en números
+        le = LabelEncoder()
+        
+        # Aplicamos el LabelEncoder a todas las columnas excepto la de clase
+        df["Matemáticas"] = le.fit_transform(df["Matemáticas"])
+        df["Ciencias"] = le.fit_transform(df["Ciencias"])
+        df["Ingles"] = le.fit_transform(df["Ingles"])
+        df["Carrera"] = le.fit_transform(df["Carrera"])
+        
+        # Separar las características y la clase
+        X = df[["Matemáticas", "Ciencias", "Ingles"]]  # Características
+        y = df["Carrera"]  # Clase
+        
+        # Crear y entrenar el árbol de decisión
+        clf = DecisionTreeClassifier(random_state=42)
+        clf.fit(X, y)
+        
+        # Graficar el árbol de decisión
+        plt.figure(figsize=(18, 8))
+        plot_tree(clf, feature_names=["Matemáticas", "Ciencias", "Ingles"], class_names=le.classes_, filled=True)
+        
+        # Guardar la imagen
+        plt.savefig('decision_tree.png')
+        
+        # Mostrar la imagen
+        plt.show()
+              
+        print("")
+        print("Desarrollado por: J.E. Carmona-Álvarez")
+
+ ![image](https://github.com/user-attachments/assets/d1c85186-3623-4ad0-ae21-9b1b72b046cd)
+
+ 
+ _**5.2.2. RandomForestClassifier**_
 
