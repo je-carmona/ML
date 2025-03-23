@@ -244,8 +244,44 @@ _Enlace Google Colab: https://colab.research.google.com/drive/1iepq3SXvebYm8RyG2
         
         print("")
         print("Desarrollado por: J.E. Carmona-Álvarez")
+--
+El orden recomendado para visitar las ciudades en menos tiempo es: [3 2 4 0 1]
 
+El tiempo mínimo para el recorriendo de estas ciudades es: 110 minutos
 
+A=0, B=1, C=2, D=3, E=4
 
+Desarrollado por: J.E. Carmona-Álvarez
 
 **4.2. Utilizando PCA visualice en 2D una base de datos de MNIST**
+
+        #Librerias
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from sklearn.decomposition import PCA
+        from sklearn.datasets import fetch_openml
+        
+        # Cargar los datos de MNIST desde OpenML
+        mnist = fetch_openml('mnist_784', version=1, as_frame=False)
+        
+        # Extraer las imágenes y etiquetas
+        X = mnist.data  # Matriz de características (70,000 imágenes de 784 píxeles cada una)
+        y = mnist.target.astype(int)  # Etiquetas de los dígitos
+        
+        # Aplicar PCA con 2 componentes
+        pca = PCA(n_components=2)
+        X_pca = pca.fit_transform(X)
+        
+        # Definir una paleta de colores para los dígitos
+        plt.figure(figsize=(10, 8))
+        scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='tab10', alpha=0.5, s=10)
+        plt.colorbar(scatter, label="Dígitos")
+        plt.xlabel("Componente Principal 1 -  Dirección de máxima varianza")
+        plt.ylabel("Componente Principal 2 - Dirección perpendicular a PC1")
+        plt.title("VISUALIZACIÓN DE MNIST EN 2D USANDO PCA")
+        plt.show()
+        
+        print("")
+        print("Desarrollado por: J.E. Carmona-Álvarez")
+
+![image](https://github.com/user-attachments/assets/d2fcca9a-830e-40f4-a529-9c9469a554f4)
