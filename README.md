@@ -195,7 +195,57 @@ shape: (12, 5)
 ![image](https://github.com/user-attachments/assets/b5ef7822-762c-4b22-8e33-1936144fb109)
 
 **TAREA 4: Hopfield y PCA**
-https://github.com/GerardoMunoz/ML_2025/blob/main/Hopfield_Covariance.ipynb
+https://colab.research.google.com/drive/1iepq3SXvebYm8RyG2JskDBIjOCC_orOZ?usp=sharing
+
 **4.1. Buscar el recorrido por todas las ciudades que demore menos tiempo, sin repetir ciudad utilizando redes de Hopfield**
+
+        import numpy as np
+        
+        # Número de ciudades y matriz de distancias
+        n_ciudades = 5
+        distancias = np.array([
+            [0, 5, 5, 6, 4],
+            [5, 0, 3, 7, 8],
+            [5, 3, 0, 4, 8],
+            [6, 7, 4, 0, 5],
+            [4, 8, 8, 5, 0]
+        ])
+        
+        # Parámetros de la red de Hopfield
+        def calcular_energia(solucion, distancias):
+            energia = 0
+            for i in range(len(solucion)):
+                for j in range(len(solucion)):
+                    energia += distancias[solucion[i], solucion[j]]
+            return energia
+        
+        # Simulación de Hopfield
+        def red_hopfield(n_ciudades, distancias, iteraciones=1000):
+            solucion_actual = np.random.permutation(n_ciudades)  # Inicializar con una permutación aleatoria
+            mejor_solucion = solucion_actual.copy()
+            mejor_energia = calcular_energia(mejor_solucion, distancias)
+        
+            for _ in range(iteraciones):
+                # Cambiar dos ciudades aleatoriamente
+                idx1, idx2 = np.random.choice(n_ciudades, 2, replace=False)
+                solucion_actual[idx1], solucion_actual[idx2] = solucion_actual[idx2], solucion_actual[idx1]
+        
+                energia_actual = calcular_energia(solucion_actual, distancias)
+                if energia_actual < mejor_energia:
+                    mejor_energia = energia_actual
+                    mejor_solucion = solucion_actual.copy()
+        
+            return mejor_solucion, mejor_energia
+        
+        # Ejecutar la red de Hopfield
+        mejor_recorrido, mejor_tiempo = red_hopfield(n_ciudades, distancias)
+        print("Mejor recorrido:", mejor_recorrido)
+        print("Tiempo mínimo:", mejor_tiempo)
+        
+        print("")
+        print("Desarrollado por: J.E. Carmona-Álvarez")
+
+
+
 
 **4.2. Utilizando PCA visualice en 2D una base de datos de MNIST**
