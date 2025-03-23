@@ -290,6 +290,7 @@ Desarrollado por: J.E. Carmona-Álvarez
 _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBweKxPSowAGShuSRq?usp=sharing_
 
 **5.1. Make the Decision Tree algorithm for categories**
+
         import numpy as np
         from sklearn.preprocessing import LabelEncoder
         from sklearn.model_selection import train_test_split
