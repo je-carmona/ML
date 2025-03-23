@@ -140,12 +140,13 @@ _Enlace para acceder: https://colab.research.google.com/drive/1PYjMSULj92htHh2cn
 
 **3.2. FP-Growth**
        
-        import polars as pl
+        # Importamos las librerías necesarias
+        from mlxtend.frequent_patterns import fpgrowth, association_rules
+        from mlxtend.preprocessing import TransactionEncoder
         import pandas as pd
-        from mlxtend.frequent_patterns import fpgrowth
-        from mlxtend.frequent_patterns import association_rules
+        from tabulate import tabulate
         
-        # Listado de transacciones
+        # Transacciones
         transacciones = [
             ["Milk", "Bread", "Butter"],
             ["Milk", "Bread"],
@@ -154,48 +155,85 @@ _Enlace para acceder: https://colab.research.google.com/drive/1PYjMSULj92htHh2cn
             ["Milk", "Bread", "Butter"]
         ]
         
-        # Obtener el listado de los artículos únicos
-        articulos = sorted(set(item for sublist in transacciones for item in sublist))
+        # Convertimos las transacciones a formato adecuado para FP-Growth
+        encoder = TransactionEncoder()
+        encoded_array = encoder.fit(transacciones).transform(transacciones)
+        df = pd.DataFrame(encoded_array, columns=encoder.columns_)
         
-        # Convertir la lista de transacciones en números binarios
-        data_binaria = []
+        # Calculamos los patrones frecuentes con FP-Growth, con soporte mínimo de 0.1
+        frequent_itemsets = fpgrowth(df, min_support=0.1, use_colnames=True)
         
-        for transaccion in transacciones:
-            fila_binaria = [1 if articulo in transaccion else 0 for articulo in articulos]
-            data_binaria.append(fila_binaria)
+        # Calculamos las reglas de asociación
+        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.6)
         
-        # Crear un binario para DataFrame de Pandas
-        df_binario = pd.DataFrame(data_binaria, columns=articulos)
-        df_binario = df_binario.astype(bool)  # Convertir a tipo booleano
+        # Convertir los frozenset en listas de elementos (más legible)
+        rules['antecedents'] = rules['antecedents'].apply(lambda x: list(x))
+        rules['consequents'] = rules['consequents'].apply(lambda x: list(x))
         
-        # Mostrar el DataFrame binario
-        print("")
-        print("Transacciones en Formato de Númenos Binarios:")
-        print("")
-        print(df_binario)
+        # Seleccionamos las columnas relevantes: Antecedentes, Consecuentes, Confianza, Soporte y Lift
+        result = rules[['antecedents', 'consequents', 'confidence', 'support', 'lift']]
         
-        # Aplicar FP-Growth para encontrar conjuntos frecuentes
-        frequent_itemsets = fpgrowth(df_binario, min_support=0.1, use_colnames=True)
+        # Dar formato a la tabla utilizando tabulate
+        formatted_result = tabulate(result, headers='keys', tablefmt='fancy_grid', showindex=False)
         
-        # Mostrar los conjuntos frecuentes en una tabla
-        print("")
-        print("\nFrequent Itemsets:")
-        print("")
-        print(frequent_itemsets)
+        # Imprimir la tabla formateada
+        print(formatted_result)
         
-        # Generar reglas de asociación a partir de los conjuntos frecuentes
-        # Calculamos las reglas con soporte, confianza y lift
-        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0)
         
-        # Mostrar las reglas de asociación
-        print("")
-        print("\n Reglas de Asociación:")
-        print("")
-        print(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']])
         print("")
         print("Desarrollado por: J.E. Carmona-Álvarez")
 
 **3.3. Compare ambos algoritmos con el mismo conjunto de datos**
+
+_Resultados:_ Reglas de Asociación **Apriori**:
+shape: (9, 5)
+┌─────────────────────┬─────────────┬───────────┬─────────┬──────────┐
+│ Antecedente         ┆ Consecuente ┆ Confianza ┆ Soporte ┆ Lift     │
+│ ---                 ┆ ---         ┆ ---       ┆ ---     ┆ ---      │
+│ list[str]           ┆ list[str]   ┆ f64       ┆ f64     ┆ f64      │
+╞═════════════════════╪═════════════╪═══════════╪═════════╪══════════╡
+│ ["Butter"]          ┆ ["Bread"]   ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Bread"]           ┆ ["Butter"]  ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Milk"]            ┆ ["Bread"]   ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Bread"]           ┆ ["Milk"]    ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Milk"]            ┆ ["Butter"]  ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Butter"]          ┆ ["Milk"]    ┆ 0.75      ┆ 0.6     ┆ 0.9375   │
+│ ["Butter", "Milk"]  ┆ ["Bread"]   ┆ 0.666667  ┆ 0.4     ┆ 0.833333 │
+│ ["Bread", "Milk"]   ┆ ["Butter"]  ┆ 0.666667  ┆ 0.4     ┆ 0.833333 │
+│ ["Bread", "Butter"] ┆ ["Milk"]    ┆ 0.666667  ┆ 0.4     ┆ 0.833333 │
+└─────────────────────┴─────────────┴───────────┴─────────┴──────────┘
+
+
+_Resultados:_ Reglas de asociación  **FP-Growth**:
+shape: (12, 5)
+╒═════════════════════╤═════════════════════╤══════════════╤═══════════╤══════════╕
+│ antecedents         │ consequents         │   confidence │   support │     lift │
+╞═════════════════════╪═════════════════════╪══════════════╪═══════════╪══════════╡
+│ ['Milk']            │ ['Butter']          │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Butter']          │ ['Milk']            │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Butter']          │ ['Bread']           │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Bread']           │ ['Butter']          │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Milk']            │ ['Bread']           │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Bread']           │ ['Milk']            │     0.75     │       0.6 │ 0.9375   │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Milk', 'Butter']  │ ['Bread']           │     0.666667 │       0.4 │ 0.833333 │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Milk', 'Bread']   │ ['Butter']          │     0.666667 │       0.4 │ 0.833333 │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Butter', 'Bread'] │ ['Milk']            │     0.666667 │       0.4 │ 0.833333 │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Milk']            │ ['Butter', 'Bread'] │     0.5      │       0.4 │ 0.833333 │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Butter']          │ ['Milk', 'Bread']   │     0.5      │       0.4 │ 0.833333 │
+├─────────────────────┼─────────────────────┼──────────────┼───────────┼──────────┤
+│ ['Bread']           │ ['Milk', 'Butter']  │     0.5      │       0.4 │ 0.833333 │
+╘═════════════════════╧═════════════════════╧══════════════╧═══════════╧══════════╛
+
 
 **TAREA 4: Hopfield y PCA**
 https://github.com/GerardoMunoz/ML_2025/blob/main/Hopfield_Covariance.ipynb
