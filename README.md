@@ -1,7 +1,7 @@
 # ML
 **TAREA 1: Ejercicio de rimas:**
 
-_Enlace para acceder: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZUbRSVYL8eFfn9vgN?usp=sharing_
+_Enlace Google Colab: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZUbRSVYL8eFfn9vgN?usp=sharing_
 
 **1.1. Codigo para encontrar las palabras con las letras dadas:**
 
@@ -77,7 +77,7 @@ _Enlace para acceder: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZU
 
 **TAREA 3: Implemente utilizando Polars los siguientes algoritmos para encontrar reglas de asociación:**
 
-_Enlace para acceder: https://colab.research.google.com/drive/1PYjMSULj92htHh2cnyX_jBl4fihs4BEa?usp=sharing_
+_Enlace Google Colab: https://colab.research.google.com/drive/1PYjMSULj92htHh2cnyX_jBl4fihs4BEa?usp=sharing_
 
 **3.1. Apriori**
 
@@ -195,7 +195,7 @@ shape: (12, 5)
 ![image](https://github.com/user-attachments/assets/b5ef7822-762c-4b22-8e33-1936144fb109)
 
 **TAREA 4: Hopfield y PCA**
-https://colab.research.google.com/drive/1iepq3SXvebYm8RyG2JskDBIjOCC_orOZ?usp=sharing
+_Enlace Google Colab: https://colab.research.google.com/drive/1iepq3SXvebYm8RyG2JskDBIjOCC_orOZ?usp=sharing_
 
 **4.1. Buscar el recorrido por todas las ciudades que demore menos tiempo, sin repetir ciudad utilizando redes de Hopfield**
 
