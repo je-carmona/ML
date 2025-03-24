@@ -70,11 +70,26 @@ _Enlace Google Colab: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZU
 
 **TAREA 2: De las siguientes librerías de Python describa algunos elementos que le hayan llamado la atención:**
 
+Las librerias de Numpy, Panda, Polars, Matplotlib y hvPlot sonfrecuentemente usadas en el análisis de datos y ciencias de datos
+
 2.1. **Numpy** 
+
+La libreria de Numpy tiene una ventaja significativa en el caluo de expresiones numericas y operaciones con matrices. Dentro de los algoritmos de la libreria se encuentra la funcion _ndarray_, que permiten almacenar y manipular grandes volúmenes de datos de manera eficiente. La libreria de Numpy por medio de sus algoritmos tambien permite realizar operaciones entre arrays de diferentes formas de manera eficiente, sin necesidad de escribir bucles explícitos lo que simplifica y acelera muchas operaciones en manejo de análisis y ciencia de datos. _Fuente: https://aprendeconalf.es/docencia/python/manual/numpy/_
 
 2.2. **Pandas y Polars**
 
+Pndas sirve para el manejo y análsisi de datos en forma de tabla o matrices,por otra parte Pandas tiene un algoritmo para la estructura de datos conocido como DataFrame, que se puede interpretar como una tabla bidimensional con la que se puede fácilmente manejar datos estructurados. El DataFrame permite seleccionar, filtrar, transformar y agregar datos de manera intuitiva. Pandas incluye métodos robustos para gestionar valores faltantes, como NaN (Not a Number), y permite rellenar, eliminar o interpolar estos valores de manera sencilla.
+
+Polar sirve para el manejo de conjuntos multiples bases de datos, hacer tareas de análisis, administracion e procesamiento de datos complejos. La libreria de Polars es una de las mas recientes y ha sido diseñada para ser mas eficiente en el procesamiento que la libreri de Pandas, especialmente en grandes volúmenes de datos. Está optimizada para realizar operaciones sobre DataFrames de manera muy eficiente utilizando múltiples hilos de procesamiento. 
+
+Fuente: https://www.vernegroup.com/actualidad/tecnologia/introduccion-polars-tratamiento-datos-comparativa-pandas/
+Fuente: https://www.youtube.com/watch?v=E2Ki0Wd9cL0
+
 2.3. **Matplotlib y hvPlot**
+
+La libreria de Matplotlib es extremadamente flexible para crear gráficos estáticos en Python ya que permite personalizar gráficos segun su tipo de gráfico hasta los detalles más pequeños, como las etiquetas, leyendas y colores. Por su parte la libreria de hvPlot está diseñado para crear visualizaciones interactivas de manera muy sencilla, ya que proporciona una interfaz asertiva sobre Pandas, permitiendo generar gráficos interactivos con solo unas pocas líneas de código.
+
+Fuente: https://www.youtube.com/watch?v=AVf0SDXNowo
 
 
 **TAREA 3: Implemente utilizando Polars los siguientes algoritmos para encontrar reglas de asociación:**
