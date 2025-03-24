@@ -547,6 +547,10 @@ Clasificación del **Estado Post-Evento** de los elementos físicos del sistema 
 * QUINDIO
 * TOLIMA
 
+**MATRIZ DE DATOS**
+
+![image](https://github.com/user-attachments/assets/08575289-50b5-467a-ba61-82ca53263d0b)
+
         import numpy as np
         import pandas as pd
         import matplotlib.pyplot as plt
@@ -613,6 +617,10 @@ Clasificación de los **Tipos de Daño** en los elementos físicos del sistema d
 * HUILA
 * QUINDIO
 * TOLIMA
+
+**MATRIZ DE DATOS**
+
+![image](https://github.com/user-attachments/assets/650a17cb-a1af-452a-9eee-11e88a0c3f12)
 
         import numpy as np
         import pandas as pd
