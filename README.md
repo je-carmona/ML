@@ -1,4 +1,5 @@
 # ML
+
 **TAREA 1: Ejercicio de rimas:**
 
 _Enlace Google Colab: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZUbRSVYL8eFfn9vgN?usp=sharing_
@@ -31,6 +32,7 @@ _Enlace Google Colab: https://colab.research.google.com/drive/1phRzdGjHBnLQvY0ZU
 **1.2. Aplicacion para subir archivo y buscar las palabras con la terminacion deseada:**
 
     import re
+    #permite usar los archivos en el entorno de Colab
     from google.colab import files
     
     # Funcion para subir el archivo
@@ -369,7 +371,28 @@ _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBw
 
 **5.2. Explore the scikit-learn algorithms**
 
+El algoritmo _Scikit-learn_ es una libreria de Python que contiene algoritmos para aprendizaje automatizado (_Machine Learning_) algunas de las principales caracteristicas de esta libreria se agrupan como: 
+
+ * **Clasificación:** Para identificar a qué categoría pertenece un objeto, algunas aplicaciones de clasiicacion se basan en detección de spam y reconocimiento de imágenes. Lo algoritmos representativos de esta categoria son aumento de gradiente, vecino cercano, regresion logística. 
+ * **Regresión:** seusa para la predicción de un atributo de valor continuo asociado a un objeto, algunas de las aplicaciones mas comúnes son la respuesta a medicamentos y precios de las acciones. Los algoritmos representativos de esta clasificación son el aumento de gradiente, vecinos más cercanos, bosque aleatorio, cresta, entre otros.
+ * **Agrupamiento:** funciona para la agrupación automática de objetos similares en conjuntos, se aplica en la segmentación de clientes, agrupación de resultados de experimentos. Los algoritmos mas comunes son k-Means, HDBSCAN y agrupamiento jerárquico
+ * **Reducción de la dimensionalidad:** Se usa para reducir el número de variables aleatorias a tener en cuenta. Sus aplicaciones se fundamentan en las visualización y aumento de la eficiencia. Los algoritmos ampliamente conocidos de esta categoria son PCA, selección de características y factorización de matrices no negativas
+ * **Selección de modelos:** Esta categoria sirve para la comparación, validación y elección de parámetros y modelos. Se aplica en precisión mejorada a través del ajuste de parámetros, y los algoritmos mas comunes son la búsqueda en cuadrícula, validación cruzada y métricas.
+ * **Preprocesamiento:** Esta caracteristica sirve para la extracción y normalización de características, los aplicaciones mas típicas son la transformación de datos de entrada, como texto, para su uso se implementan principalmente los algoritmos de aprendizaje automático. Los algoritmos diseñados para esta caracteristica son el preprocesamiento y extracción de características.
+
+Tomado de: https://scikit-learn.org/stable/index.html
+
+Para consultar todos los algoritmos de la libreria _Scikit-learn_ se puede ejecutar el siguiente código: 
+        
+        from sklearn.utils import all_estimators
+        
+        modelos = all_estimators()
+        print([modelo[0] for modelo in modelos])
+
+
  _**5.2.1. DecisionTreeClassifier**_
+
+
         import numpy as np
         import pandas as pd
         from sklearn.tree import DecisionTreeClassifier, plot_tree
@@ -406,25 +429,232 @@ _Enlace Google Colab: https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBw
         X = df[["Matemáticas", "Ciencias", "Ingles"]]  # Características
         y = df["Carrera"]  # Clase
         
-        # Crear y entrenar el árbol de decisión
+        # El algoritmo sklearn por defecto crea y entrenar el árbol de decisión por el metodo de GINI
+        # Para usar el metodo de Entropy se usa la expresión 'DecisionTreeClassifier(criterion="entropy", random_state=42)'
+        #clf = DecisionTreeClassifier(criterion="entropy", random_state=42)
+        #clf.fit(X, y)
         clf = DecisionTreeClassifier(random_state=42)
         clf.fit(X, y)
         
         # Graficar el árbol de decisión
-        plt.figure(figsize=(18, 8))
+        plt.figure(figsize=(18, 6))
         plot_tree(clf, feature_names=["Matemáticas", "Ciencias", "Ingles"], class_names=le.classes_, filled=True)
         
         # Guardar la imagen
-        plt.savefig('decision_tree.png')
+        plt.savefig('decision_tree_entropy.png')
         
         # Mostrar la imagen
         plt.show()
-              
+        
         print("")
         print("Desarrollado por: J.E. Carmona-Álvarez")
 
- ![image](https://github.com/user-attachments/assets/d1c85186-3623-4ad0-ae21-9b1b72b046cd)
+Por el metodo de gini 
+
+![image](https://github.com/user-attachments/assets/db22072a-877a-4222-ab71-5195ecfe4161)
+
+
+Por el metodo de Entropy
+
+![image](https://github.com/user-attachments/assets/03bbeb1b-68c0-4c08-966b-4cdd2107b9f6)
 
  
  _**5.2.2. RandomForestClassifier**_
+
+        import numpy as np
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        from sklearn.tree import plot_tree
+        
+        # Datos originales
+        data = [
+            ["G", "G", "R", "E"],
+            ["R", "G", "B", "M"],
+            ["B", "R", "G", "A"],
+            ["G", "R", "G", "E"],
+            ["R", "B", "R", "A"],
+            ["G", "G", "G", "E"],
+            ["B", "G", "R", "M"],
+            ["R", "R", "R", "M"],
+            ["G", "B", "G", "A"],
+            ["B", "B", "B", "A"]
+        ]
+        
+        # Convertir los datos en un DataFrame
+        df = pd.DataFrame(data, columns=["Matemáticas", "Ciencias", "Inglés", "Carrera"])
+        
+        # Codificar las variables categóricas en números
+        le = LabelEncoder()
+        for col in df.columns:
+            df[col] = le.fit_transform(df[col])
+        
+        # Separar características y clase
+        X = df[["Matemáticas", "Ciencias", "Inglés"]]
+        y = df["Carrera"]
+        
+        # Dividir en conjunto de entrenamiento y prueba
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Crear el modelo RandomForestClassifier con entropía
+        clf = RandomForestClassifier(n_estimators=10, criterion="entropy", random_state=42)
+        clf.fit(X_train, y_train)
+        
+        # Hacer predicciones
+        y_pred = clf.predict(X_test)
+        
+        # Evaluar la precisión del modelo
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f'Precisión del modelo: {accuracy:.2f}')
+        
+        # Visualizar un árbol dentro del bosque
+        plt.figure(figsize=(16, 8))
+        plot_tree(clf.estimators_[0], feature_names=["Matemáticas", "Ciencias", "Inglés"], class_names=["Artes", "Ingeniería", "Medicina"], filled=True)
+        plt.title("Árbol de decisión dentro del Bosque Aleatorio (Entropía)")
+        plt.show()
+        
+        print("")
+        print("Desarrollado por: J.E. Carmona-Álvarez")
+        
+![image](https://github.com/user-attachments/assets/29f5986b-af7c-4e53-9a8c-f371c9fba7db)
+
+**5.3. Presentation on Supervised Learning with which you have previous experience**
+
+Clasificación del **Estado Post-Evento** de los elementos físicos del sistema de infraestructura afectado por desatres provocados por fenomenos naturles, en los departamentos de:
+* AMAZONAS
+* ANTIOQUIA
+* BOYACA
+* CORDOBA
+* HUILA
+* QUINDIO
+* TOLIMA
+
+        import numpy as np
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        from sklearn.tree import plot_tree
+        
+        # Datos
+        data = [
+            ["Parcialmente funcional", "Operacional", "Operacional", "Baja Resiliencia"],
+            ["Parcialmente funcional", "No funcional", "No funcional", "Alta Resiliencia"],
+            ["Operacional", "Parcialmente funcional", "Parcialmente funcional", "Alta Resiliencia"],
+            ["No funcional", "Operacional", "Operacional", "Media Resiliencia"],
+            ["Parcialmente funcional", "No funcional", "No funcional", "Media Resiliencia"],
+            ["Operacional", "No funcional", "Operacional", "Alta Resiliencia"],
+            ["Operacional", "Parcialmente funcional", "No funcional", "Alta Resiliencia"]
+        ]
+        
+        # Convertir en DataFrame
+        df = pd.DataFrame(data, columns=["AVALANCHA", "DESLIZAMIENTO", "INUNDACION", "HIPOTESIS"])
+        
+        # Codificar variables categóricas
+        df_encoded = df.copy()
+        le = LabelEncoder()
+        for col in df.columns:
+            df_encoded[col] = le.fit_transform(df[col])
+        
+        # Separar características y clase
+        X = df_encoded[["AVALANCHA", "DESLIZAMIENTO", "INUNDACION"]]
+        y = df_encoded["HIPOTESIS"]
+        
+        # Dividir en conjunto de entrenamiento y prueba
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Modelo RandomForestClassifier
+        clf = RandomForestClassifier(n_estimators=10, criterion="entropy", random_state=42)
+        clf.fit(X_train, y_train)
+        
+        # Hacer predicciones
+        y_pred = clf.predict(X_test)
+        
+        # Evaluar precisión
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f'Precisión del modelo: {accuracy:.2f}')
+        
+        # Visualizar un árbol dentro del bosque
+        plt.figure(figsize=(14, 10))
+        plot_tree(clf.estimators_[0], feature_names=["AVALANCHA", "DESLIZAMIENTO", "INUNDACION"], 
+                  class_names=["Baja Resiliencia", "Media Resiliencia", "Alta Resiliencia"], filled=True)
+        plt.title("Árbol de decisión dentro del Bosque Aleatorio (Entropía)")
+        plt.show()
+        
+        print("\nDesarrollado por: J.E. Carmona-Álvarez")
+
+![image](https://github.com/user-attachments/assets/ddd0f2e7-a01d-4216-ae76-5d0c77368b2d)
+
+Clasificación de los **Tipos de Daño** en los elementos físicos del sistema de infraestructura afectado por desatres provocados por fenomenos naturles, en los departamentos de:
+* AMAZONAS
+* ANTIOQUIA
+* BOYACA
+* CORDOBA
+* HUILA
+* QUINDIO
+* TOLIMA
+
+        import numpy as np
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        from sklearn.tree import plot_tree
+        
+        # Datos
+        data = [
+            ["Daño moderado", "Sin daño", "Sin daño", "Baja Resiliencia"],
+            ["Daño moderado", "Daño severo", "Daño severo", "Alta Resiliencia"],
+            ["Sin daño", "Daño moderado", "Daño moderado", "Alta Resiliencia"],
+            ["Daño severo", "Sin daño", "Sin daño", "Media Resiliencia"],
+            ["Daño moderado", "Daño severo", "Daño severo", "Media Resiliencia"],
+            ["Sin daño", "Daño severo", "Sin daño", "Alta Resiliencia"],
+            ["Sin daño", "Daño moderado", "Daño severo", "Alta Resiliencia"]
+        ]
+        
+        # Convertir en DataFrame
+        df = pd.DataFrame(data, columns=["AVALANCHA", "DESLIZAMIENTO", "INUNDACION", "HIPOTESIS"])
+        
+        # Codificar variables categóricas
+        df_encoded = df.copy()
+        le = LabelEncoder()
+        for col in df.columns:
+            df_encoded[col] = le.fit_transform(df[col])
+        
+        # Separar características y clase
+        X = df_encoded[["AVALANCHA", "DESLIZAMIENTO", "INUNDACION"]]
+        y = df_encoded["HIPOTESIS"]
+        
+        # Dividir en conjunto de entrenamiento y prueba
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        
+        # Modelo RandomForestClassifier
+        clf = RandomForestClassifier(n_estimators=10, criterion="entropy", random_state=42)
+        clf.fit(X_train, y_train)
+        
+        # Hacer predicciones
+        y_pred = clf.predict(X_test)
+        
+        # Evaluar precisión
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f'Precisión del modelo: {accuracy:.2f}')
+        
+        # Visualizar un árbol dentro del bosque
+        plt.figure(figsize=(10 , 6))
+        plot_tree(clf.estimators_[0], feature_names=["AVALANCHA", "DESLIZAMIENTO", "INUNDACION"], 
+                  class_names=le.inverse_transform([0, 1, 2]), filled=True)
+        plt.title("Árbol de decisión dentro del Bosque Aleatorio (Entropía)")
+        plt.show()
+        
+        print("\nDesarrollado por: J.E. Carmona-Álvarez")
+
+
+![image](https://github.com/user-attachments/assets/25f5a3ae-4adf-4099-9880-ec1d14b8f7bd)
 
