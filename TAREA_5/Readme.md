@@ -2,7 +2,7 @@
 
 _Enlace Google Colab:_ https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBweKxPSowAGShuSRq?usp=sharing
 
-**5.1.** Hacer el algoritmo de árbol de decisión para categorías
+**5.1. Hacer el algoritmo de árbol de decisión para categorías**
 
     #Manejo de arreglos y matrices numéricas
     import numpy as np
@@ -78,7 +78,7 @@ _Enlace Google Colab:_ https://colab.research.google.com/drive/17FWE7lUU_2tmAOlB
 
 ![image](https://github.com/user-attachments/assets/02b699b1-a53f-4385-850c-b4b5ff91b503)
 
-**5.2.** Explora los algoritmos de scikit-learn
+**5.2. Explora los algoritmos de scikit-learn**
 
 El algoritmo Scikit-learn es una librería de Python que contiene algoritmos para aprendizaje automatizado (Machine Learning), algunas de las principales características de esta librería se agrupan como:
 
@@ -224,7 +224,7 @@ Por el método de Entropy
     ![image](https://github.com/user-attachments/assets/0d8bc8c7-23f2-460f-af01-a80b9e4d7e79)
 
 
-**5.3.** Presentación sobre el Aprendizaje Supervisado con el que tienes experiencia previa
+**5.3. Presentación sobre el Aprendizaje Supervisado con el que tienes experiencia previa**
 
 Clasificación del Estado Post-Evento de los elementos físicos del sistema de infraestructura afectado por desastres provocados por fenomenos naturles, en los departamentos de:
 
