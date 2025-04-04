@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/4f086dd4-6928-4376-9a63-a4779e04a575)**TAREA 5: Árbol de decisión**
+**TAREA 5: Árbol de decisión**
 
 _Enlace Google Colab:_ https://colab.research.google.com/drive/17FWE7lUU_2tmAOlBweKxPSowAGShuSRq?usp=sharing
 
