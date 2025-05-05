@@ -1,6 +1,6 @@
 **TAREA 6: kNN**
 
-_Enlace Google Colab:_https://colab.research.google.com/drive/13qG3ZuJTJoWz-HKcq-l0y6kX31Pt3sDx?usp=sharing
+_Enlace Google Colab:_ https://colab.research.google.com/drive/13qG3ZuJTJoWz-HKcq-l0y6kX31Pt3sDx?usp=sharing
 
 ENtrenamiento inicial del modelo para encontrar los vecinos cercanos con la base de datos:
 
