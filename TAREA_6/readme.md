@@ -2,7 +2,314 @@
 
 _Enlace Google Colab:_ https://colab.research.google.com/drive/13qG3ZuJTJoWz-HKcq-l0y6kX31Pt3sDx?usp=sharing
 
-ENtrenamiento inicial del modelo para encontrar los vecinos cercanos con la base de datos:
+
+**6.1.** How can you evaluate the hypothesis that the problem with almost all predictions giving `Medium` is due to the disproportionate data in that column?
+
+Se hace un análisis del balance de datos, si estos resultan tener una alter dispersion puede establecerse que debido a esto los rsultados de la prediccion predominan en Medium, si los datos no son dispersos quiere decir que es necesario realizar ajustes a los parametros de entrenamiento del modelo. 
+
+            import polars as pl
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            
+            # Configuración de visualización
+            plt.style.use('ggplot')  # Usamos un estilo más genérico que esté disponible
+            sns.set_theme(style="whitegrid")
+            sns.set_palette("husl")
+            
+            # Cargar el dataset
+            try:
+                df = pl.read_csv("Students_Grading_Dataset.csv")
+            except FileNotFoundError:
+                print("Error: No se encontró el archivo 'Students_Grading_Dataset.csv'")
+                print("Asegúrate de que el archivo esté en el mismo directorio que este script.")
+                exit()
+            
+            ## Análisis de Distribución de Variables Numéricas
+            
+            # 1. Estadísticas descriptivas básicas
+            print("\nEstadísticas descriptivas para variables numéricas:")
+            numeric_stats = df.select(pl.col(pl.Float64, pl.Int64)).describe()
+            print(numeric_stats)
+            
+            # 2. Visualización de distribuciones
+            def plot_numeric_distribution(column_name):
+                plt.figure(figsize=(10, 6))
+                sns.histplot(df[column_name].to_numpy(), kde=True, bins=30)
+                plt.title(f'Distribución de {column_name}')
+                plt.xlabel(column_name)
+                plt.ylabel('Frecuencia')
+                plt.tight_layout()
+                plt.show()
+            
+            numeric_columns = ['Age', 'Attendance (%)', 'Midterm_Score', 'Final_Score', 
+                               'Assignments_Avg', 'Quizzes_Avg', 'Total_Score', 
+                               'Study_Hours_per_Week', 'Stress_Level (1-10)', 
+                               'Sleep_Hours_per_Night']
+            
+            for col in numeric_columns:
+                if col in df.columns:
+                    plot_numeric_distribution(col)
+                else:
+                    print(f"Advertencia: La columna {col} no existe en el dataset")
+            
+            ## Análisis de Distribución de Variables Categóricas
+            
+            # 1. Conteo de frecuencias para variables categóricas
+            print("\nDistribución de variables categóricas:")
+            categorical_columns = ['Gender', 'Department', 'Grade', 'Extracurricular_Activities',
+                                  'Internet_Access_at_Home', 'Parent_Education_Level',
+                                  'Family_Income_Level']
+            
+            for col in categorical_columns:
+                if col in df.columns:
+                    print(f"\nDistribución de {col}:")
+                    print(df[col].value_counts().sort(col))
+                else:
+                    print(f"Advertencia: La columna {col} no existe en el dataset")
+            
+            # 2. Visualización de distribuciones categóricas
+            def plot_categorical_distribution(column_name):
+                plt.figure(figsize=(10, 6))
+                # Convertir a DataFrame de Pandas y obtener conteos
+                value_counts = df[column_name].value_counts().sort(column_name).to_pandas()
+                # Renombrar columnas para claridad
+                value_counts.columns = ['category', 'count']
+                
+                sns.barplot(x='category', y='count', data=value_counts)
+                plt.title(f'Distribución de {column_name}')
+                plt.xlabel(column_name)
+                plt.ylabel('Conteo')
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                plt.show()
+            
+            for col in categorical_columns:
+                if col in df.columns:
+                    plot_categorical_distribution(col)
+                else:
+                    print(f"Advertencia: La columna {col} no existe en el dataset")
+            
+            ## Análisis de correlaciones entre variables numéricas
+            print("\nMatriz de correlación:")
+            numeric_df = df.select(pl.col(pl.Float64, pl.Int64))
+            correlation_matrix = numeric_df.corr()
+            print(correlation_matrix)
+            
+            # Visualización de la matriz de correlación
+            plt.figure(figsize=(12, 10))
+            sns.heatmap(correlation_matrix.to_pandas(), annot=True, fmt=".2f", 
+                        cmap='coolwarm', center=0, vmin=-1, vmax=1)
+            plt.title('Matriz de Correlación')
+            plt.tight_layout()
+            plt.show()
+            
+            ## Análisis por departamento
+            print("\nEstadísticas por departamento:")
+            if 'Department' in df.columns:
+                department_stats = df.group_by('Department').agg([
+                    pl.col('Total_Score').mean().alias('Promedio_Total_Score'),
+                    pl.col('Total_Score').median().alias('Mediana_Total_Score'),
+                    pl.col('Grade').value_counts().alias('Distribucion_Grados')
+                ])
+                print(department_stats)
+            else:
+                print("Advertencia: La columna 'Department' no existe en el dataset")
+            
+            ## Análisis de distribución de notas (Grade) por género
+            print("\nDistribución de notas por género:")
+            if 'Gender' in df.columns and 'Grade' in df.columns:
+                # Convertir a Pandas para facilitar la visualización
+                df_pd = df.select(['Gender', 'Grade']).to_pandas()
+                
+                plt.figure(figsize=(10, 6))
+                sns.countplot(data=df_pd, x='Grade', hue='Gender')
+                plt.title('Distribución de Notas por Género')
+                plt.tight_layout()
+                plt.show()
+            else:
+                print("Advertencia: Las columnas 'Gender' o 'Grade' no existen en el dataset")
+
+                print("")
+                print("Desarrollado por: J.E. Carmona-Álvarez")
+**Resultados:**
+
+Estadísticas descriptivas para variables numéricas:
+shape: (9, 13)
+┌───────────┬──────────┬───────────┬───────────┬───┬───────────┬───────────┬───────────┬───────────┐
+│ statistic ┆ Age      ┆ Attendanc ┆ Midterm_S ┆ … ┆ Total_Sco ┆ Study_Hou ┆ Stress_Le ┆ Sleep_Hou │
+│ ---       ┆ ---      ┆ e (%)     ┆ core      ┆   ┆ re        ┆ rs_per_We ┆ vel       ┆ rs_per_Ni │
+│ str       ┆ f64      ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ek        ┆ (1-10)    ┆ ght       │
+│           ┆          ┆ f64       ┆ f64       ┆   ┆ f64       ┆ ---       ┆ ---       ┆ ---       │
+│           ┆          ┆           ┆           ┆   ┆           ┆ f64       ┆ f64       ┆ f64       │
+╞═══════════╪══════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪═══════════╪═══════════╡
+│ count     ┆ 5000.0   ┆ 5000.0    ┆ 5000.0    ┆ … ┆ 5000.0    ┆ 5000.0    ┆ 5000.0    ┆ 5000.0    │
+│ null_coun ┆ 0.0      ┆ 0.0       ┆ 0.0       ┆ … ┆ 0.0       ┆ 0.0       ┆ 0.0       ┆ 0.0       │
+│ t         ┆          ┆           ┆           ┆   ┆           ┆           ┆           ┆           │
+│ mean      ┆ 21.0484  ┆ 75.356076 ┆ 70.701924 ┆ … ┆ 75.02186  ┆ 17.52114  ┆ 5.5072    ┆ 6.51442   │
+│ std       ┆ 1.989786 ┆ 14.392716 ┆ 17.436325 ┆ … ┆ 14.323246 ┆ 7.193035  ┆ 2.886662  ┆ 1.446155  │
+│ min       ┆ 18.0     ┆ 50.01     ┆ 40.0      ┆ … ┆ 50.01     ┆ 5.0       ┆ 1.0       ┆ 4.0       │
+│ 25%       ┆ 19.0     ┆ 62.95     ┆ 55.71     ┆ … ┆ 62.71     ┆ 11.5      ┆ 3.0       ┆ 5.3       │
+│ 50%       ┆ 21.0     ┆ 75.68     ┆ 70.87     ┆ … ┆ 75.35     ┆ 17.4      ┆ 6.0       ┆ 6.5       │
+│ 75%       ┆ 23.0     ┆ 87.86     ┆ 85.76     ┆ … ┆ 87.06     ┆ 23.7      ┆ 8.0       ┆ 7.8       │
+│ max       ┆ 24.0     ┆ 100.0     ┆ 99.99     ┆ … ┆ 99.99     ┆ 30.0      ┆ 10.0      ┆ 9.0       │
+└───────────┴──────────┴───────────┴───────────┴───┴───────────┴───────────┴───────────┴───────────┘
+
+![image](https://github.com/user-attachments/assets/29163637-cafa-42a0-84d3-daa064f6c19a)
+
+![image](https://github.com/user-attachments/assets/d1524222-5829-4c48-b760-2190f146ae68)
+
+![image](https://github.com/user-attachments/assets/3dd582c1-bf00-4f86-ad0e-a53f4d9f3b0b)
+
+![image](https://github.com/user-attachments/assets/834ca813-10f2-481a-9c00-8cc87e6fa816)
+
+![image](https://github.com/user-attachments/assets/34664e87-22ff-4ee1-a7dc-c4d8e50edce7)
+
+![image](https://github.com/user-attachments/assets/516dabdb-bc33-4427-9c71-957d1430f673)
+
+![image](https://github.com/user-attachments/assets/3f7bd53d-56e4-4a8e-8ff7-8ed52ef61c60)
+
+Distribución de variables categóricas:
+
+Distribución de Gender:
+shape: (2, 2)
+┌────────┬───────┐
+│ Gender ┆ count │
+│ ---    ┆ ---   │
+│ str    ┆ u32   │
+╞════════╪═══════╡
+│ Female ┆ 2449  │
+│ Male   ┆ 2551  │
+└────────┴───────┘
+
+Distribución de Department:
+shape: (4, 2)
+┌─────────────┬───────┐
+│ Department  ┆ count │
+│ ---         ┆ ---   │
+│ str         ┆ u32   │
+╞═════════════╪═══════╡
+│ Business    ┆ 1264  │
+│ CS          ┆ 1239  │
+│ Engineering ┆ 1274  │
+│ Mathematics ┆ 1223  │
+└─────────────┴───────┘
+
+Distribución de Grade:
+shape: (5, 2)
+┌───────┬───────┐
+│ Grade ┆ count │
+│ ---   ┆ ---   │
+│ str   ┆ u32   │
+╞═══════╪═══════╡
+│ A     ┆ 997   │
+│ B     ┆ 1014  │
+│ C     ┆ 975   │
+│ D     ┆ 1011  │
+│ F     ┆ 1003  │
+└───────┴───────┘
+
+Distribución de Extracurricular_Activities:
+shape: (2, 2)
+┌────────────────────────────┬───────┐
+│ Extracurricular_Activities ┆ count │
+│ ---                        ┆ ---   │
+│ str                        ┆ u32   │
+╞════════════════════════════╪═══════╡
+│ No                         ┆ 2488  │
+│ Yes                        ┆ 2512  │
+└────────────────────────────┴───────┘
+
+Distribución de Internet_Access_at_Home:
+shape: (2, 2)
+┌─────────────────────────┬───────┐
+│ Internet_Access_at_Home ┆ count │
+│ ---                     ┆ ---   │
+│ str                     ┆ u32   │
+╞═════════════════════════╪═══════╡
+│ No                      ┆ 2480  │
+│ Yes                     ┆ 2520  │
+└─────────────────────────┴───────┘
+
+Distribución de Parent_Education_Level:
+shape: (5, 2)
+┌────────────────────────┬───────┐
+│ Parent_Education_Level ┆ count │
+│ ---                    ┆ ---   │
+│ str                    ┆ u32   │
+╞════════════════════════╪═══════╡
+│ Bachelor's             ┆ 1020  │
+│ High School            ┆ 943   │
+│ Master's               ┆ 1000  │
+│ None                   ┆ 1025  │
+│ PhD                    ┆ 1012  │
+└────────────────────────┴───────┘
+
+Distribución de Family_Income_Level:
+shape: (3, 2)
+┌─────────────────────┬───────┐
+│ Family_Income_Level ┆ count │
+│ ---                 ┆ ---   │
+│ str                 ┆ u32   │
+╞═════════════════════╪═══════╡
+│ High                ┆ 1639  │
+│ Low                 ┆ 1687  │
+│ Medium              ┆ 1674  │
+└─────────────────────┴───────┘
+
+
+![image](https://github.com/user-attachments/assets/34edab3c-c051-4801-b044-86c0bf7121ee)
+
+![image](https://github.com/user-attachments/assets/1e4de661-881e-4afb-89aa-d7eef328b29e)
+
+Matriz de correlación:
+shape: (12, 12)
+┌───────────┬───────────┬───────────┬───────────┬───┬───────────┬───────────┬───────────┬──────────┐
+│ Age       ┆ Attendanc ┆ Midterm_S ┆ Final_Sco ┆ … ┆ Total_Sco ┆ Study_Hou ┆ Stress_Le ┆ Sleep_Ho │
+│ ---       ┆ e (%)     ┆ core      ┆ re        ┆   ┆ re        ┆ rs_per_We ┆ vel       ┆ urs_per_ │
+│ f64       ┆ ---       ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ek        ┆ (1-10)    ┆ Night    │
+│           ┆ f64       ┆ f64       ┆ f64       ┆   ┆ f64       ┆ ---       ┆ ---       ┆ ---      │
+│           ┆           ┆           ┆           ┆   ┆           ┆ f64       ┆ f64       ┆ f64      │
+╞═══════════╪═══════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪═══════════╪══════════╡
+│ 1.0       ┆ 0.015936  ┆ -0.00771  ┆ -0.0037   ┆ … ┆ 0.000375  ┆ -0.002313 ┆ 0.0138    ┆ 0.01551  │
+│ 0.015936  ┆ 1.0       ┆ 0.007881  ┆ -0.0093   ┆ … ┆ -0.009283 ┆ 0.0112    ┆ 0.003838  ┆ 0.003493 │
+│ -0.00771  ┆ 0.007881  ┆ 1.0       ┆ -0.004638 ┆ … ┆ -0.002094 ┆ 0.009096  ┆ 0.03522   ┆ 0.015053 │
+│ -0.0037   ┆ -0.0093   ┆ -0.004638 ┆ 1.0       ┆ … ┆ 0.01736   ┆ 0.004645  ┆ -0.004479 ┆ 0.011281 │
+│ 0.007902  ┆ -0.0036   ┆ -0.025153 ┆ 0.013635  ┆ … ┆ 0.019396  ┆ -0.011738 ┆ -0.002671 ┆ 0.016998 │
+│ …         ┆ …         ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …         ┆ …        │
+│ 0.006628  ┆ -0.011101 ┆ -0.024138 ┆ -0.006563 ┆ … ┆ -0.027344 ┆ -0.002586 ┆ -0.000497 ┆ -0.00207 │
+│           ┆           ┆           ┆           ┆   ┆           ┆           ┆           ┆ 8        │
+│ 0.000375  ┆ -0.009283 ┆ -0.002094 ┆ 0.01736   ┆ … ┆ 1.0       ┆ -0.009479 ┆ -0.007114 ┆ -0.01771 │
+│ -0.002313 ┆ 0.0112    ┆ 0.009096  ┆ 0.004645  ┆ … ┆ -0.009479 ┆ 1.0       ┆ 0.011673  ┆ 0.002522 │
+│ 0.0138    ┆ 0.003838  ┆ 0.03522   ┆ -0.004479 ┆ … ┆ -0.007114 ┆ 0.011673  ┆ 1.0       ┆ 0.016442 │
+│ 0.01551   ┆ 0.003493  ┆ 0.015053  ┆ 0.011281  ┆ … ┆ -0.01771  ┆ 0.002522  ┆ 0.016442  ┆ 1.0      │
+└───────────┴───────────┴───────────┴───────────┴───┴───────────┴───────────┴───────────┴──────────┘
+
+![image](https://github.com/user-attachments/assets/be2a3997-54d6-4369-868e-73c12392bec9)
+
+Estadísticas por departamento:
+shape: (4, 4)
+┌─────────────┬──────────────────────┬─────────────────────┬─────────────────────────────────┐
+│ Department  ┆ Promedio_Total_Score ┆ Mediana_Total_Score ┆ Distribucion_Grados             │
+│ ---         ┆ ---                  ┆ ---                 ┆ ---                             │
+│ str         ┆ f64                  ┆ f64                 ┆ list[struct[2]]                 │
+╞═════════════╪══════════════════════╪═════════════════════╪═════════════════════════════════╡
+│ Engineering ┆ 75.326444            ┆ 75.65               ┆ [{"A",256}, {"C",264}, … {"D",… │
+│ Mathematics ┆ 75.711087            ┆ 76.44               ┆ [{"B",261}, {"D",248}, … {"A",… │
+│ CS          ┆ 75.070081            ┆ 75.4                ┆ [{"C",218}, {"F",265}, … {"B",… │
+│ Business    ┆ 74.000728            ┆ 74.075              ┆ [{"A",253}, {"C",242}, … {"F",… │
+└─────────────┴──────────────────────┴─────────────────────┴─────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+Entrenamiento inicial del modelo para encontrar los vecinos cercanos con la base de datos:
 
       import pandas as pd
       import numpy as np
@@ -409,7 +716,7 @@ R²: -0.0497
 
 Desarrollado por: J.E. Carmona-Álvarez
 
-**6.1.** How can you evaluate the hypothesis that the problem with almost all predictions giving `Medium` is due to the disproportionate data in that column?
+
 
 
 
