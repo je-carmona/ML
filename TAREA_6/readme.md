@@ -2,7 +2,6 @@
 
 _Enlace Google Colab:_ https://colab.research.google.com/drive/13qG3ZuJTJoWz-HKcq-l0y6kX31Pt3sDx?usp=sharing
 
-
 **6.1.** How can you evaluate the hypothesis that the problem with almost all predictions giving `Medium` is due to the disproportionate data in that column?
 
 Se hace un análisis del balance de datos, si estos resultan tener una alter dispersion puede establecerse que debido a esto los rsultados de la prediccion predominan en Medium, si los datos no son dispersos quiere decir que es necesario realizar ajustes a los parametros de entrenamiento del modelo. 
@@ -133,26 +132,7 @@ Se hace un análisis del balance de datos, si estos resultan tener una alter dis
                 print("Desarrollado por: J.E. Carmona-Álvarez")
 **Resultados:**
 
-Estadísticas descriptivas para variables numéricas:
-shape: (9, 13)
-┌───────────┬──────────┬───────────┬───────────┬───┬───────────┬───────────┬───────────┬───────────┐
-│ statistic ┆ Age      ┆ Attendanc ┆ Midterm_S ┆ … ┆ Total_Sco ┆ Study_Hou ┆ Stress_Le ┆ Sleep_Hou │
-│ ---       ┆ ---      ┆ e (%)     ┆ core      ┆   ┆ re        ┆ rs_per_We ┆ vel       ┆ rs_per_Ni │
-│ str       ┆ f64      ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ek        ┆ (1-10)    ┆ ght       │
-│           ┆          ┆ f64       ┆ f64       ┆   ┆ f64       ┆ ---       ┆ ---       ┆ ---       │
-│           ┆          ┆           ┆           ┆   ┆           ┆ f64       ┆ f64       ┆ f64       │
-╞═══════════╪══════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ count     ┆ 5000.0   ┆ 5000.0    ┆ 5000.0    ┆ … ┆ 5000.0    ┆ 5000.0    ┆ 5000.0    ┆ 5000.0    │
-│ null_coun ┆ 0.0      ┆ 0.0       ┆ 0.0       ┆ … ┆ 0.0       ┆ 0.0       ┆ 0.0       ┆ 0.0       │
-│ t         ┆          ┆           ┆           ┆   ┆           ┆           ┆           ┆           │
-│ mean      ┆ 21.0484  ┆ 75.356076 ┆ 70.701924 ┆ … ┆ 75.02186  ┆ 17.52114  ┆ 5.5072    ┆ 6.51442   │
-│ std       ┆ 1.989786 ┆ 14.392716 ┆ 17.436325 ┆ … ┆ 14.323246 ┆ 7.193035  ┆ 2.886662  ┆ 1.446155  │
-│ min       ┆ 18.0     ┆ 50.01     ┆ 40.0      ┆ … ┆ 50.01     ┆ 5.0       ┆ 1.0       ┆ 4.0       │
-│ 25%       ┆ 19.0     ┆ 62.95     ┆ 55.71     ┆ … ┆ 62.71     ┆ 11.5      ┆ 3.0       ┆ 5.3       │
-│ 50%       ┆ 21.0     ┆ 75.68     ┆ 70.87     ┆ … ┆ 75.35     ┆ 17.4      ┆ 6.0       ┆ 6.5       │
-│ 75%       ┆ 23.0     ┆ 87.86     ┆ 85.76     ┆ … ┆ 87.06     ┆ 23.7      ┆ 8.0       ┆ 7.8       │
-│ max       ┆ 24.0     ┆ 100.0     ┆ 99.99     ┆ … ┆ 99.99     ┆ 30.0      ┆ 10.0      ┆ 9.0       │
-└───────────┴──────────┴───────────┴───────────┴───┴───────────┴───────────┴───────────┴───────────┘
+![image](https://github.com/user-attachments/assets/b04405be-ad56-4457-93e7-95b982408e63)
 
 ![image](https://github.com/user-attachments/assets/29163637-cafa-42a0-84d3-daa064f6c19a)
 
@@ -168,138 +148,133 @@ shape: (9, 13)
 
 ![image](https://github.com/user-attachments/assets/3f7bd53d-56e4-4a8e-8ff7-8ed52ef61c60)
 
-Distribución de variables categóricas:
-
-Distribución de Gender:
-shape: (2, 2)
-┌────────┬───────┐
-│ Gender ┆ count │
-│ ---    ┆ ---   │
-│ str    ┆ u32   │
-╞════════╪═══════╡
-│ Female ┆ 2449  │
-│ Male   ┆ 2551  │
-└────────┴───────┘
-
-Distribución de Department:
-shape: (4, 2)
-┌─────────────┬───────┐
-│ Department  ┆ count │
-│ ---         ┆ ---   │
-│ str         ┆ u32   │
-╞═════════════╪═══════╡
-│ Business    ┆ 1264  │
-│ CS          ┆ 1239  │
-│ Engineering ┆ 1274  │
-│ Mathematics ┆ 1223  │
-└─────────────┴───────┘
-
-Distribución de Grade:
-shape: (5, 2)
-┌───────┬───────┐
-│ Grade ┆ count │
-│ ---   ┆ ---   │
-│ str   ┆ u32   │
-╞═══════╪═══════╡
-│ A     ┆ 997   │
-│ B     ┆ 1014  │
-│ C     ┆ 975   │
-│ D     ┆ 1011  │
-│ F     ┆ 1003  │
-└───────┴───────┘
-
-Distribución de Extracurricular_Activities:
-shape: (2, 2)
-┌────────────────────────────┬───────┐
-│ Extracurricular_Activities ┆ count │
-│ ---                        ┆ ---   │
-│ str                        ┆ u32   │
-╞════════════════════════════╪═══════╡
-│ No                         ┆ 2488  │
-│ Yes                        ┆ 2512  │
-└────────────────────────────┴───────┘
-
-Distribución de Internet_Access_at_Home:
-shape: (2, 2)
-┌─────────────────────────┬───────┐
-│ Internet_Access_at_Home ┆ count │
-│ ---                     ┆ ---   │
-│ str                     ┆ u32   │
-╞═════════════════════════╪═══════╡
-│ No                      ┆ 2480  │
-│ Yes                     ┆ 2520  │
-└─────────────────────────┴───────┘
-
-Distribución de Parent_Education_Level:
-shape: (5, 2)
-┌────────────────────────┬───────┐
-│ Parent_Education_Level ┆ count │
-│ ---                    ┆ ---   │
-│ str                    ┆ u32   │
-╞════════════════════════╪═══════╡
-│ Bachelor's             ┆ 1020  │
-│ High School            ┆ 943   │
-│ Master's               ┆ 1000  │
-│ None                   ┆ 1025  │
-│ PhD                    ┆ 1012  │
-└────────────────────────┴───────┘
-
-Distribución de Family_Income_Level:
-shape: (3, 2)
-┌─────────────────────┬───────┐
-│ Family_Income_Level ┆ count │
-│ ---                 ┆ ---   │
-│ str                 ┆ u32   │
-╞═════════════════════╪═══════╡
-│ High                ┆ 1639  │
-│ Low                 ┆ 1687  │
-│ Medium              ┆ 1674  │
-└─────────────────────┴───────┘
-
-
 ![image](https://github.com/user-attachments/assets/34edab3c-c051-4801-b044-86c0bf7121ee)
 
 ![image](https://github.com/user-attachments/assets/1e4de661-881e-4afb-89aa-d7eef328b29e)
 
-Matriz de correlación:
-shape: (12, 12)
-┌───────────┬───────────┬───────────┬───────────┬───┬───────────┬───────────┬───────────┬──────────┐
-│ Age       ┆ Attendanc ┆ Midterm_S ┆ Final_Sco ┆ … ┆ Total_Sco ┆ Study_Hou ┆ Stress_Le ┆ Sleep_Ho │
-│ ---       ┆ e (%)     ┆ core      ┆ re        ┆   ┆ re        ┆ rs_per_We ┆ vel       ┆ urs_per_ │
-│ f64       ┆ ---       ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ek        ┆ (1-10)    ┆ Night    │
-│           ┆ f64       ┆ f64       ┆ f64       ┆   ┆ f64       ┆ ---       ┆ ---       ┆ ---      │
-│           ┆           ┆           ┆           ┆   ┆           ┆ f64       ┆ f64       ┆ f64      │
-╞═══════════╪═══════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪═══════════╪══════════╡
-│ 1.0       ┆ 0.015936  ┆ -0.00771  ┆ -0.0037   ┆ … ┆ 0.000375  ┆ -0.002313 ┆ 0.0138    ┆ 0.01551  │
-│ 0.015936  ┆ 1.0       ┆ 0.007881  ┆ -0.0093   ┆ … ┆ -0.009283 ┆ 0.0112    ┆ 0.003838  ┆ 0.003493 │
-│ -0.00771  ┆ 0.007881  ┆ 1.0       ┆ -0.004638 ┆ … ┆ -0.002094 ┆ 0.009096  ┆ 0.03522   ┆ 0.015053 │
-│ -0.0037   ┆ -0.0093   ┆ -0.004638 ┆ 1.0       ┆ … ┆ 0.01736   ┆ 0.004645  ┆ -0.004479 ┆ 0.011281 │
-│ 0.007902  ┆ -0.0036   ┆ -0.025153 ┆ 0.013635  ┆ … ┆ 0.019396  ┆ -0.011738 ┆ -0.002671 ┆ 0.016998 │
-│ …         ┆ …         ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …         ┆ …        │
-│ 0.006628  ┆ -0.011101 ┆ -0.024138 ┆ -0.006563 ┆ … ┆ -0.027344 ┆ -0.002586 ┆ -0.000497 ┆ -0.00207 │
-│           ┆           ┆           ┆           ┆   ┆           ┆           ┆           ┆ 8        │
-│ 0.000375  ┆ -0.009283 ┆ -0.002094 ┆ 0.01736   ┆ … ┆ 1.0       ┆ -0.009479 ┆ -0.007114 ┆ -0.01771 │
-│ -0.002313 ┆ 0.0112    ┆ 0.009096  ┆ 0.004645  ┆ … ┆ -0.009479 ┆ 1.0       ┆ 0.011673  ┆ 0.002522 │
-│ 0.0138    ┆ 0.003838  ┆ 0.03522   ┆ -0.004479 ┆ … ┆ -0.007114 ┆ 0.011673  ┆ 1.0       ┆ 0.016442 │
-│ 0.01551   ┆ 0.003493  ┆ 0.015053  ┆ 0.011281  ┆ … ┆ -0.01771  ┆ 0.002522  ┆ 0.016442  ┆ 1.0      │
-└───────────┴───────────┴───────────┴───────────┴───┴───────────┴───────────┴───────────┴──────────┘
+
+![image](https://github.com/user-attachments/assets/6382349a-269e-4c6a-826b-ecfd485cac96)
 
 ![image](https://github.com/user-attachments/assets/be2a3997-54d6-4369-868e-73c12392bec9)
 
-Estadísticas por departamento:
-shape: (4, 4)
-┌─────────────┬──────────────────────┬─────────────────────┬─────────────────────────────────┐
-│ Department  ┆ Promedio_Total_Score ┆ Mediana_Total_Score ┆ Distribucion_Grados             │
-│ ---         ┆ ---                  ┆ ---                 ┆ ---                             │
-│ str         ┆ f64                  ┆ f64                 ┆ list[struct[2]]                 │
-╞═════════════╪══════════════════════╪═════════════════════╪═════════════════════════════════╡
-│ Engineering ┆ 75.326444            ┆ 75.65               ┆ [{"A",256}, {"C",264}, … {"D",… │
-│ Mathematics ┆ 75.711087            ┆ 76.44               ┆ [{"B",261}, {"D",248}, … {"A",… │
-│ CS          ┆ 75.070081            ┆ 75.4                ┆ [{"C",218}, {"F",265}, … {"B",… │
-│ Business    ┆ 74.000728            ┆ 74.075              ┆ [{"A",253}, {"C",242}, … {"F",… │
-└─────────────┴──────────────────────┴─────────────────────┴─────────────────────────────────┘
+Desarrollado por: J.E. Carmona-Álvarez
 
+**Análisis de la hipótesis:** 
 
+Una vez obtenidos los resultados del análisis de desbalance en los datos, se puede observar que la categoría 'Medium' en la variable 'Family_Income_Level' es la más frecuente en el conjunto de datos original. Este desequilibrio introduce un sesgo en el modelo, que tiende a predecir con mayor frecuencia dicha categoría. Esto se refleja en la matriz de confusión, donde la mayoría de las predicciones incorrectas pertenecen a la clase 'Medium'.
+
+La alta tasa de error del modelo entrenado sugiere que este sesgo está generando falsos positivos, en los que se predice 'Medium' cuando en realidad corresponde a otra categoría. Esta situación persiste incluso al variar el valor de **k**, lo cual indica que el modelo sigue favoreciendo la categoría predominante. Por lo tanto, la configuración actual del modelo no es satisfactoria mientras no se aborde el problema de desbalance de clases.
+
+Por tanto, se puede afirmar que la hipótesis de que la mayoría de las predicciones corresponden a la categoría 'Medium' se debe al desbalance en los datos. El modelo está aprendiendo a priorizar la clase mayoritaria para minimizar el error global, aunque esto implique un rendimiento deficiente en la clasificación de las clases minoritarias.
+
+**6.2.** Predict the numeric variable 'Study_Hours_per_Week_normalized', determine the error for each **k** and choice the best **k**.
+
+Para predecir la variable numérica Study_Hours_per_Week_normalized y determinar el mejor valor de k, es necesario: 
+
+**1.** Preparar los datos
+
+            import polars as pl
+            import numpy as np
+            from sklearn.neighbors import KNeighborsRegressor
+            from sklearn.model_selection import train_test_split
+            from sklearn.metrics import mean_squared_error
+            import matplotlib.pyplot as plt
+            
+            # Seleccionar características y variable objetivo
+            features = df5.select([
+                "Stress_Level (1-10)_normalized",
+                "Grade_A", "Grade_B", "Grade_C", "Grade_D", "Grade_F",
+                "Income_Low", "Income_Medium", "Income_High"
+            ])
+            
+            target = df5.select("Study_Hours_per_Week_normalized")
+            
+            # Convertir a pandas para compatibilidad con sklearn
+            X = features.to_pandas()
+            y = target.to_pandas().values.ravel()  # Convertir a array 1D
+            
+            # Dividir en conjuntos de entrenamiento y prueba (80-20)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+**2.** Evaluación de Diferentes Valores de k
+
+            k_values = range(1, 31)  # Probaremos k de 1 a 30
+            mse_values = []
+            
+            for k in k_values:
+                # Crear y entrenar modelo KNN
+                knn = KNeighborsRegressor(n_neighbors=k)
+                knn.fit(X_train, y_train)
+                
+                # Predecir y calcular error cuadrático medio
+                y_pred = knn.predict(X_test)
+                mse = mean_squared_error(y_test, y_pred)
+                mse_values.append(mse)
+                
+                print(f"k = {k:2d} - MSE: {mse:.6f}")
+
+**Resultados:**
+
+k =  1 - MSE: 0.158812
+k =  2 - MSE: 0.117504
+k =  3 - MSE: 0.107019
+k =  4 - MSE: 0.101223
+k =  5 - MSE: 0.096867
+k =  6 - MSE: 0.093472
+k =  7 - MSE: 0.092825
+k =  8 - MSE: 0.091702
+k =  9 - MSE: 0.090834
+k = 10 - MSE: 0.088583
+k = 11 - MSE: 0.088567
+k = 12 - MSE: 0.088815
+k = 13 - MSE: 0.087819
+k = 14 - MSE: 0.087300
+k = 15 - MSE: 0.087611
+k = 16 - MSE: 0.087145
+k = 17 - MSE: 0.086884
+k = 18 - MSE: 0.086991
+k = 19 - MSE: 0.087020
+k = 20 - MSE: 0.086347
+k = 21 - MSE: 0.086309
+k = 22 - MSE: 0.086260
+k = 23 - MSE: 0.086264
+k = 24 - MSE: 0.086463
+k = 25 - MSE: 0.086841
+k = 26 - MSE: 0.086853
+k = 27 - MSE: 0.086623
+k = 28 - MSE: 0.086541
+k = 29 - MSE: 0.086243
+k = 30 - MSE: 0.086466
+
+**3.** Selección del Mejor k
+
+            # Encontrar el k con menor MSE
+            best_k = k_values[np.argmin(mse_values)]
+            best_mse = min(mse_values)
+            
+            print(f"\nEl mejor valor de k es {best_k} con un MSE de {best_mse:.6f}")
+            
+            # Graficar MSE vs k
+            plt.figure(figsize=(10, 6))
+            plt.plot(k_values, mse_values, marker='o')
+            plt.axvline(x=best_k, color='r', linestyle='--', label=f'Mejor k = {best_k}')
+            plt.xlabel('Valor de k')
+            plt.ylabel('Error Cuadrático Medio (MSE)')
+            plt.title('Error vs Valor de k en KNN Regresión')
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+            
+            print("")
+            print("Desarrollado por: J.E. Carmona-Álvarez")
+
+El mejor valor de k es 29 con un MSE de 0.086243
+
+![image](https://github.com/user-attachments/assets/7443fead-503c-4090-88e0-c598b4ecab68)
+
+Desarrollado por: J.E. Carmona-Álvarez
+
+**6.3.** Add new variables that can improve performance.
 
 
 
