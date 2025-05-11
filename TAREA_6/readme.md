@@ -276,420 +276,908 @@ Desarrollado por: J.E. Carmona-Álvarez
 
 **6.3.** Add new variables that can improve performance.
 
+Ajuste del entrenamiento del Modelo usando las librerias de Polars 
 
-
-
-
-
-
-
-
-Entrenamiento inicial del modelo para encontrar los vecinos cercanos con la base de datos:
-
-      import pandas as pd
-      import numpy as np
-      from sklearn.model_selection import train_test_split
-      from sklearn.preprocessing import StandardScaler
-      from sklearn.metrics import mean_squared_error
-      import matplotlib.pyplot as plt
-      from tqdm import tqdm  # Para mostrar progreso
-      
-      # Cargar los datos
-      print("Cargando datos...")
-      data = pd.read_csv('Students_Grading_Dataset.csv')
-      
-      # Preprocesamiento básico
-      print("Preprocesando datos...")
-      features = ['Age', 'Attendance (%)', 'Midterm_Score', 'Final_Score', 
-                  'Assignments_Avg', 'Quizzes_Avg', 'Participation_Score', 
-                  'Projects_Score', 'Total_Score', 'Stress_Level (1-10)', 
-                  'Sleep_Hours_per_Night']
-      target = 'Study_Hours_per_Week'
-      
-      # Convertir variables categóricas de forma más segura
-      data['Gender'] = data['Gender'].apply(lambda x: 0 if x == 'Male' else 1)
-      data['Extracurricular_Activities'] = data['Extracurricular_Activities'].apply(lambda x: 0 if x == 'No' else 1)
-      data['Internet_Access_at_Home'] = data['Internet_Access_at_Home'].apply(lambda x: 0 if x == 'No' else 1)
-      
-      # Mapeo seguro de niveles educativos
-      education_map = {'None': 0, 'High School': 1, 'Bachelor\'s': 2, 'Master\'s': 3, 'PhD': 4}
-      data['Parent_Education_Level'] = data['Parent_Education_Level'].map(education_map).fillna(0).astype(int)
-      
-      # Mapeo seguro de ingresos
-      income_map = {'Low': 0, 'Medium': 1, 'High': 2}
-      data['Family_Income_Level'] = data['Family_Income_Level'].map(income_map).fillna(0).astype(int)
-      
-      # Añadir features adicionales
-      features += ['Gender', 'Extracurricular_Activities', 'Internet_Access_at_Home',
-                   'Parent_Education_Level', 'Family_Income_Level']
-      
-      # Limpieza de datos
-      data = data.dropna(subset=features + [target])
-      data = data.reset_index(drop=True)
-      
-      # Preparar X e y
-      X = data[features]
-      y = data[target]
-      
-      # Normalización
-      print("Normalizando datos...")
-      scaler = StandardScaler()
-      X_normalized = scaler.fit_transform(X)
-      
-      # División train-test
-      print("Dividiendo datos...")
-      X_train, X_test, y_train, y_test = train_test_split(
-          X_normalized, y, test_size=0.3, random_state=42)
-      
-      # Versión optimizada de KNN
-      class OptimizedKNNRegressor:
-          def __init__(self, k=5, metric='euclidean'):
-              self.k = k
-              self.metric = metric
-              
-          def fit(self, X, y):
-              self.X_train = X
-              self.y_train = y.values if hasattr(y, 'values') else y
-              
-          def predict(self, X):
-              predictions = np.zeros(X.shape[0])
-              for i, x in enumerate(X):
-                  if self.metric == 'euclidean':
-                      distances = np.sqrt(np.sum((self.X_train - x)**2, axis=1))
-                  elif self.metric == 'manhattan':
-                      distances = np.sum(np.abs(self.X_train - x), axis=1)
-                  elif self.metric == 'cosine':
-                      norm_x = np.linalg.norm(x)
-                      norm_train = np.linalg.norm(self.X_train, axis=1)
-                      distances = 1 - np.dot(self.X_train, x) / (norm_train * norm_x)
-                  else:
-                      raise ValueError("Métrica no soportada")
-                      
-                  k_indices = np.argpartition(distances, self.k)[:self.k]
-                  predictions[i] = np.mean(self.y_train[k_indices])
-                  
-              return predictions
-      
-      # Evaluación más rápida con menos valores de k
-      print("Evaluando modelos...")
-      k_values = range(1, 21, 2)  # Valores impares para evitar empates
-      metrics = ['euclidean', 'manhattan', 'cosine']
-      
-      results = {}
-      
-      for metric in metrics:
-          print(f"\nEvaluando métrica: {metric}")
-          mse_scores = []
-          for k in tqdm(k_values, desc=f'k values ({metric})'):
-              knn = OptimizedKNNRegressor(k=k, metric=metric)
-              knn.fit(X_train, y_train)
-              y_pred = knn.predict(X_test)
-              mse_scores.append(mean_squared_error(y_test, y_pred))
-          
-          results[metric] = mse_scores
-          best_k = k_values[np.argmin(mse_scores)]
-          print(f"Mejor k: {best_k} con MSE: {min(mse_scores):.4f}")
-      
-      # Gráfico de resultados
-      plt.figure(figsize=(12, 6))
-      for metric, mse_scores in results.items():
-          plt.plot(k_values, mse_scores, 'o-', label=f'{metric} distance')
-      
-      plt.title('Error (MSE) vs. k para diferentes métricas')
-      plt.xlabel('k (número de vecinos)')
-      plt.ylabel('Error Cuadrático Medio (MSE)')
-      plt.legend()
-      plt.grid(True)
-      plt.show()
-      
-      # Selección del mejor modelo
-      best_metric = min(results, key=lambda k: min(results[k]))
-      best_k = k_values[np.argmin(results[best_metric])]
-      best_mse = min(results[best_metric])
-      
-      print(f"\nMejor combinación:")
-      print(f"- Métrica: {best_metric}")
-      print(f"- k: {best_k}")
-      print(f"- MSE: {best_mse:.4f}")
-      
-      # Entrenar el mejor modelo
-      print("\nEntrenando modelo final...")
-      final_model = OptimizedKNNRegressor(k=best_k, metric=best_metric)
-      final_model.fit(X_train, y_train)
-      
-      # Evaluación final
-      y_pred = final_model.predict(X_test)
-      final_mse = mean_squared_error(y_test, y_pred)
-      final_mae = mean_absolute_error(y_test, y_pred)
-      final_r2 = r2_score(y_test, y_pred)
-      
-      print("\nMétricas finales del modelo:")
-      print(f"MSE: {final_mse:.4f}")
-      print(f"MAE: {final_mae:.4f}")
-      print(f"R²: {final_r2:.4f}")
-      
-      # Ejemplo de predicción
-      print("\nEjemplo de predicciones vs valores reales:")
-      sample_indices = np.random.choice(len(y_test), size=5, replace=False)
-      for idx in sample_indices:
-          print(f"Predicho: {y_pred[idx]:.2f} | Real: {y_test.iloc[idx] if hasattr(y_test, 'iloc') else y_test[idx]:.2f}")
-      print("")
-      print("Desarrollado por: J.E. Carmona-Álvarez")
-
-Resultados: 
-Evaluando métrica: euclidean
-k values (euclidean): 100%|██████████| 10/10 [00:04<00:00,  2.22it/s]
-Mejor k: 19 con MSE: 53.6838
-
-Evaluando métrica: manhattan
-k values (manhattan): 100%|██████████| 10/10 [00:05<00:00,  1.82it/s]
-Mejor k: 19 con MSE: 53.8232
-
-Evaluando métrica: cosine
-k values (cosine): 100%|██████████| 10/10 [00:04<00:00,  2.43it/s]
-Mejor k: 19 con MSE: 53.8000
-
-![image](https://github.com/user-attachments/assets/fdcd61fb-dd4d-4279-b91a-781378a7fd20)
-
-Mejor combinación:
-- Métrica: euclidean
-- k: 19
-- MSE: 53.6838
-
-Entrenando modelo final...
-
-Métricas finales del modelo:
-MSE: 53.6838
-MAE: 6.2860
-R²: -0.0582
-
-Ejemplo de predicciones vs valores reales:
-Predicho: 17.59 | Real: 25.00
-Predicho: 18.13 | Real: 21.80
-Predicho: 18.49 | Real: 26.40
-Predicho: 14.92 | Real: 6.20
-Predicho: 18.34 | Real: 15.30
-
-Desarrollado por: J.E. Carmona-Álvarez
-
-Mejoramiento del rendimiento del codigo: 
-
-            import pandas as pd
+            #Desarrollado con la libreria de POLARS
+            
+            #Librerias usadas
+            
+            import polars as pl
             import numpy as np
-            from sklearn.model_selection import train_test_split, cross_val_score
-            from sklearn.preprocessing import RobustScaler
-            from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-            from sklearn.base import BaseEstimator, RegressorMixin
             import matplotlib.pyplot as plt
-            from tqdm import tqdm
-            from collections import defaultdict
+            import seaborn as sns
+            from sklearn.model_selection import train_test_split
+            from sklearn.preprocessing import StandardScaler, LabelEncoder
+            from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+            from sklearn.neighbors import KNeighborsClassifier
+            from sklearn.model_selection import GridSearchCV
+            from scipy.spatial.distance import euclidean, hamming
+            import time
             
-            # Cargar y preprocesar datos
-            print("Cargando y preprocesando datos...")
-            data = pd.read_csv('Students_Grading_Dataset.csv')
+            # Configuración inicial
+            plt.style.use('ggplot')
+            plt.rcParams['figure.figsize'] = (12, 6)
+            np.random.seed(42)
             
-            def preprocess_data(df):
-                # Convertir variables categóricas
-                df['Gender'] = df['Gender'].map({'Male': 0, 'Female': 1})
-                df['Extracurricular_Activities'] = df['Extracurricular_Activities'].map({'No': 0, 'Yes': 1})
-                df['Internet_Access_at_Home'] = df['Internet_Access_at_Home'].map({'No': 0, 'Yes': 1})
+            ## 1. Carga y exploración inicial de datos
+            def load_and_explore_data(file_path):
+                # Cargar datos
+                df = pl.read_csv(file_path)
                 
-                # Mapeo ordinal
-                education_map = {'None': 0, 'High School': 1, 'Bachelor\'s': 2, 'Master\'s': 3, 'PhD': 4}
-                df['Parent_Education_Level'] = df['Parent_Education_Level'].map(education_map).fillna(0).astype(int)
-                
-                income_map = {'Low': 0, 'Medium': 1, 'High': 2}
-                df['Family_Income_Level'] = df['Family_Income_Level'].map(income_map).fillna(0).astype(int)
-                
-                # Crear nuevas características
-                df['Academic_Performance'] = (df['Midterm_Score'] + df['Final_Score'] + df['Assignments_Avg']) / 3
-                df['Stress_Sleep_Ratio'] = df['Stress_Level (1-10)'] / (df['Sleep_Hours_per_Night'] + 1e-6)  # Evitar división por cero
-                df['Attendance_Score_Interaction'] = df['Attendance (%)'] * df['Academic_Performance']
-                
-                # Eliminar outliers
-                for col in ['Study_Hours_per_Week', 'Academic_Performance', 'Total_Score']:
-                    q1 = df[col].quantile(0.05)
-                    q3 = df[col].quantile(0.95)
-                    df = df[(df[col] >= q1) & (df[col] <= q3)]
+                # Exploración inicial
+                print("=== Información del Dataset ===")
+                print(f"Filas: {df.height}, Columnas: {df.width}")
+                print("\n=== Primeras filas ===")
+                print(df.head())
+                print("\n=== Estadísticas descriptivas ===")
+                print(df.describe())
+                print("\n=== Tipos de datos ===")
+                print(df.schema)
+                print("\n=== Valores faltantes ===")
+                print(df.null_count())
                 
                 return df
             
-            data = preprocess_data(data)
+            # Cargar y explorar datos
+            df = load_and_explore_data("Students_Grading_Dataset.csv")
             
-            # Selección de características
-            features = [
-                'Age', 'Attendance (%)', 'Midterm_Score', 'Final_Score', 'Assignments_Avg',
-                'Academic_Performance', 'Stress_Sleep_Ratio', 'Attendance_Score_Interaction',
-                'Gender', 'Parent_Education_Level', 'Family_Income_Level',
-                'Stress_Level (1-10)', 'Sleep_Hours_per_Night'
-            ]
-            target = 'Study_Hours_per_Week'
+            ## 2. Selección y análisis de columnas relevantes
+            def select_relevant_columns(df):
+                # Columnas a mantener
+                relevant_cols = [
+                    'Student_ID', 'Gender', 'Age', 'Department', 'Attendance (%)',
+                    'Midterm_Score', 'Final_Score', 'Assignments_Avg', 'Quizzes_Avg',
+                    'Participation_Score', 'Projects_Score', 'Total_Score', 'Grade',
+                    'Study_Hours_per_Week', 'Extracurricular_Activities', 
+                    'Internet_Access_at_Home', 'Parent_Education_Level',
+                    'Family_Income_Level', 'Stress_Level (1-10)', 'Sleep_Hours_per_Night'
+                ]
+                
+                # Filtrar columnas
+                df = df.select(relevant_cols)
+                
+                # Verificar
+                print("\n=== Columnas seleccionadas ===")
+                print(df.columns)
+                
+                return df
             
-            # Limpieza final
-            data = data.dropna(subset=features + [target])
-            data = data.reset_index(drop=True)
+            df = select_relevant_columns(df)
             
-            # Preparar datos
-            X = data[features]
-            y = data[target]
+            ## 3. Análisis estadístico y visualización
+            def analyze_and_visualize(df):
+                # Convertir a pandas para visualización
+                pdf = df.to_pandas()
+                
+                # Distribución de notas
+                plt.figure(figsize=(10, 6))
+                sns.countplot(data=pdf, x='Grade', order=sorted(pdf['Grade'].unique()))
+                plt.title('Distribución de Calificaciones')
+                plt.show()
+                
+                # Relación entre asistencia y nota final
+                plt.figure(figsize=(10, 6))
+                sns.boxplot(data=pdf, x='Grade', y='Attendance (%)', order=sorted(pdf['Grade'].unique()))
+                plt.title('Asistencia por Calificación')
+                plt.show()
+                
+                # Correlación entre variables numéricas
+                numeric_cols = pdf.select_dtypes(include=['float64', 'int64']).columns
+                plt.figure(figsize=(12, 8))
+                sns.heatmap(pdf[numeric_cols].corr(), annot=True, cmap='coolwarm', center=0)
+                plt.title('Matriz de Correlación')
+                plt.show()
+                
+                # Distribución por departamento
+                plt.figure(figsize=(12, 6))
+                sns.countplot(data=pdf, x='Department', hue='Grade')
+                plt.title('Distribución de Calificaciones por Departamento')
+                plt.xticks(rotation=45)
+                plt.show()
             
-            # Escalado robusto
-            scaler = RobustScaler()
-            X_scaled = scaler.fit_transform(X)
+            analyze_and_visualize(df)
             
-            # División train-test
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_scaled, y, test_size=0.2, random_state=42, stratify=pd.qcut(y, q=5))
+            ## 4. Transformación definitiva de datos
+            def transform_data(df):
+                # Convertir a pandas temporalmente para transformaciones
+                pdf = df.to_pandas()
+                
+                # Codificación de variables categóricas con LabelEncoder
+                categorical_cols = ['Gender', 'Department', 'Extracurricular_Activities', 
+                                  'Internet_Access_at_Home', 'Parent_Education_Level', 
+                                  'Family_Income_Level']
+                
+                label_encoders = {}
+                for col in categorical_cols:
+                    le = LabelEncoder()
+                    pdf[col] = le.fit_transform(pdf[col])
+                    label_encoders[col] = le
+                
+                # Convertir Grade a numérico (A=4, B=3, C=2, D=1, F=0)
+                grade_map = {'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0}
+                pdf['Grade'] = pdf['Grade'].map(grade_map)
+                
+                # Volver a Polars
+                df = pl.from_pandas(pdf)
+                
+                # Verificar transformación
+                print("\n=== Datos después de transformación ===")
+                print(df.head())
+                
+                return df, label_encoders, grade_map
             
-            # Implementación mejorada de KNN compatible con scikit-learn
-            class WeightedKNNRegressor(BaseEstimator, RegressorMixin):
-                def __init__(self, k=5, metric='euclidean', weight=True):
+            df, label_encoders, grade_map = transform_data(df)
+            
+            ## 5. Preparación para modelado
+            def prepare_for_modeling(df):
+                # Convertir a pandas para usar con scikit-learn
+                pdf = df.to_pandas()
+                
+                # Definir características (X) y objetivo (y)
+                features = ['Gender', 'Age', 'Department', 'Attendance (%)', 'Midterm_Score', 
+                           'Final_Score', 'Assignments_Avg', 'Quizzes_Avg', 'Participation_Score',
+                           'Projects_Score', 'Study_Hours_per_Week', 'Extracurricular_Activities',
+                           'Internet_Access_at_Home', 'Parent_Education_Level', 
+                           'Family_Income_Level', 'Stress_Level (1-10)', 'Sleep_Hours_per_Night']
+                
+                target = 'Grade'
+                
+                X = pdf[features]
+                y = pdf[target]
+                
+                # Dividir en conjuntos de entrenamiento y prueba
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=0.3, random_state=42, stratify=y
+                )
+                
+                # Escalar características
+                scaler = StandardScaler()
+                X_train = scaler.fit_transform(X_train)
+                X_test = scaler.transform(X_test)
+                
+                return X_train, X_test, y_train, y_test, scaler, features, target
+            
+            X_train, X_test, y_train, y_test, scaler, features, target = prepare_for_modeling(df)
+            
+            ## 6. Función de distancia - Combinación de Euclidiana y Hamming
+            def combined_distance(x, y, alpha=0.5):
+                """
+                Combina distancia Euclidiana y Hamming con un factor de peso alpha.
+                alpha: peso para la distancia Euclidiana (1-alpha para Hamming)
+                """
+                eucl_dist = euclidean(x, y)
+                ham_dist = hamming(x, y) * len(x)  # hamming devuelve promedio, multiplicamos por longitud
+                
+                return alpha * eucl_dist + (1 - alpha) * ham_dist
+            
+            ## 7. Implementación de KNN con distancia personalizada
+            class CustomKNN:
+                def __init__(self, k=5, alpha=0.5):
                     self.k = k
-                    self.metric = metric
-                    self.weight = weight
+                    self.alpha = alpha  # Peso para distancia combinada
                     
                 def fit(self, X, y):
                     self.X_train = X
-                    self.y_train = y.values if hasattr(y, 'values') else y
-                    return self
+                    self.y_train = y
                     
                 def predict(self, X):
-                    predictions = np.zeros(X.shape[0])
-                    for i, x in enumerate(X):
-                        if self.metric == 'euclidean':
-                            distances = np.sqrt(np.sum((self.X_train - x)**2, axis=1))
-                        elif self.metric == 'manhattan':
-                            distances = np.sum(np.abs(self.X_train - x), axis=1)
-                        elif self.metric == 'cosine':
-                            norm_x = np.linalg.norm(x)
-                            norm_train = np.linalg.norm(self.X_train, axis=1)
-                            distances = 1 - np.dot(self.X_train, x) / (norm_train * norm_x)
-                        else:
-                            raise ValueError("Métrica no soportada")
-                            
-                        k_indices = np.argpartition(distances, self.k)[:self.k]
-                        k_distances = distances[k_indices]
-                        k_values = self.y_train[k_indices]
+                    predictions = []
+                    for x in X:
+                        # Calcular distancias a todos los puntos de entrenamiento
+                        distances = [combined_distance(x, x_train, self.alpha) 
+                                    for x_train in self.X_train]
                         
-                        if self.weight:
-                            weights = 1 / (k_distances + 1e-6)  # Suavizado
-                            predictions[i] = np.sum(weights * k_values) / np.sum(weights)
-                        else:
-                            predictions[i] = np.mean(k_values)
-                            
-                    return predictions
-                
-                def get_params(self, deep=True):
-                    return {'k': self.k, 'metric': self.metric, 'weight': self.weight}
-                
-                def set_params(self, **parameters):
-                    for parameter, value in parameters.items():
-                        setattr(self, parameter, value)
-                    return self
-            
-            # Optimización de hiperparámetros
-            print("\nOptimizando hiperparámetros...")
-            param_grid = {
-                'k': range(1, 31, 2),  # Valores impares
-                'metric': ['euclidean', 'manhattan'],
-                'weight': [True, False]
-            }
-            
-            best_score = float('inf')
-            best_params = {}
-            results = defaultdict(list)
-            
-            # Búsqueda en grilla manual con validación cruzada
-            for k in tqdm(param_grid['k'], desc='Evaluando k'):
-                for metric in param_grid['metric']:
-                    for weight in param_grid['weight']:
-                        model = WeightedKNNRegressor(k=k, metric=metric, weight=weight)
+                        # Obtener los k índices más cercanos
+                        k_indices = np.argsort(distances)[:self.k]
                         
-                        # Validación cruzada más rápida con menos folds
-                        try:
-                            scores = -cross_val_score(model, X_train, y_train, 
-                                                    cv=3, scoring='neg_mean_squared_error',
-                                                    n_jobs=-1)
-                            avg_score = np.mean(scores)
-                            
-                            results['k'].append(k)
-                            results['metric'].append(metric)
-                            results['weight'].append(weight)
-                            results['mse'].append(avg_score)
-                            
-                            if avg_score < best_score:
-                                best_score = avg_score
-                                best_params = {'k': k, 'metric': metric, 'weight': weight}
-                        except:
-                            continue
+                        # Obtener las etiquetas de los k vecinos más cercanos
+                        k_nearest_labels = [self.y_train.iloc[i] for i in k_indices]
+                        
+                        # Votación mayoritaria
+                        most_common = max(set(k_nearest_labels), key=k_nearest_labels.count)
+                        predictions.append(most_common)
+                        
+                    return np.array(predictions)
             
-            # Resultados de la búsqueda
-            results_df = pd.DataFrame(results)
-            print("\nTop 5 combinaciones de parámetros:")
-            print(results_df.sort_values('mse').head(5))
+            ## 8. Entrenamiento y evaluación del modelo
+            def train_and_evaluate(X_train, X_test, y_train, y_test, k=5, alpha=0.5):
+                # Modelo KNN estándar - Euclidiana
+                print("\n=== KNN estándar (Euclidiana) ===")
+                start_time = time.time()
+                knn_std = KNeighborsClassifier(n_neighbors=k)
+                knn_std.fit(X_train, y_train)
+                y_pred_std = knn_std.predict(X_test)
+                
+                print(f"Tiempo de entrenamiento: {time.time() - start_time:.2f} segundos")
+                print("Exactitud:", accuracy_score(y_test, y_pred_std))
+                print("\nReporte de clasificación:")
+                print(classification_report(y_test, y_pred_std))
+                
+                # Modelo KNN personalizado - Combinación Euclidiana + Hamming 
+                print("\n=== KNN personalizado (Combinación Euclidiana + Hamming) ===")
+                start_time = time.time()
+                knn_custom = CustomKNN(k=k, alpha=alpha)
+                knn_custom.fit(X_train, y_train)
+                y_pred_custom = knn_custom.predict(X_test)
+                
+                print(f"Tiempo de entrenamiento: {time.time() - start_time:.2f} segundos")
+                print("Exactitud:", accuracy_score(y_test, y_pred_custom))
+                print("\nReporte de clasificación:")
+                print(classification_report(y_test, y_pred_custom))
+                
+                # Matriz de confusión para el modelo personalizado
+                plt.figure(figsize=(8, 6))
+                cm = confusion_matrix(y_test, y_pred_custom)
+                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                            xticklabels=grade_map.keys(), yticklabels=grade_map.keys())
+                plt.title('Matriz de Confusión (KNN Personalizado)')
+                plt.xlabel('Predicho')
+                plt.ylabel('Real')
+                plt.show()
+                
+                return knn_std, knn_custom, y_pred_std, y_pred_custom
             
-            print(f"\nMejores parámetros: {best_params}")
-            print(f"MSE promedio en validación cruzada: {best_score:.4f}")
+            knn_std, knn_custom, y_pred_std, y_pred_custom = train_and_evaluate(
+                X_train, X_test, y_train, y_test, k=5, alpha=0.6
+            )
             
-            # Entrenar modelo final
-            final_model = WeightedKNNRegressor(**best_params)
-            final_model.fit(X_train, y_train)
+            ## 9. Optimización del modelo para la búsqueda del mejor k y alpha
+            def optimize_model(X_train, y_train):
+                # Definir parámetros a probar
+                param_grid = {
+                    'n_neighbors': range(3, 15, 2),
+                    'weights': ['uniform', 'distance'],
+                    'metric': ['euclidean', 'manhattan', 'minkowski']
+                }
+                
+                # GridSearchCV para encontrar los mejores parámetros
+                grid = GridSearchCV(
+                    KNeighborsClassifier(), 
+                    param_grid, 
+                    cv=5, 
+                    scoring='accuracy', 
+                    n_jobs=-1
+                )
+                
+                grid.fit(X_train, y_train)
+                
+                print("\n Mejores parámetros para KNN estándar")
+                print(grid.best_params_)
+                print("Mejor exactitud:", grid.best_score_)
+                
+                # Evaluar con los mejores parámetros
+                best_knn = grid.best_estimator_
+                
+                return best_knn
             
-            # Evaluación final
-            y_pred = final_model.predict(X_test)
-            final_mse = mean_squared_error(y_test, y_pred)
-            final_mae = mean_absolute_error(y_test, y_pred)
-            final_r2 = r2_score(y_test, y_pred)
+            best_knn = optimize_model(X_train, y_train)
             
-            print("\nMétricas finales en conjunto de prueba:")
-            print(f"MSE: {final_mse:.4f}")
-            print(f"MAE: {final_mae:.4f}")
-            print(f"R²: {final_r2:.4f}")
+            # Evaluar el mejor modelo en el conjunto de prueba
+            y_pred_best = best_knn.predict(X_test)
+            print("\nRendimiento del mejor modelo en conjunto de prueba")
+            print("Exactitud:", accuracy_score(y_test, y_pred_best))
+            print("\nReporte de clasificación:")
+            print(classification_report(y_test, y_pred_best))
             
-            # Visualización
-            plt.figure(figsize=(12, 5))
-            plt.subplot(1, 2, 1)
-            plt.scatter(y_test, y_pred, alpha=0.6)
-            plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], '--r')
-            plt.title('Predicciones vs Valores Reales')
-            plt.xlabel('Valores Reales')
-            plt.ylabel('Predicciones')
+            ## 10. Visualización de la búsqueda del mejor k
+            def plot_k_search(X_train, y_train, X_test, y_test):
+                # Probar diferentes valores de k
+                k_values = range(1, 30)
+                train_scores = []
+                test_scores = []
+                
+                for k in k_values:
+                    knn = KNeighborsClassifier(n_neighbors=k)
+                    knn.fit(X_train, y_train)
+                    train_scores.append(knn.score(X_train, y_train))
+                    test_scores.append(knn.score(X_test, y_test))
+                
+                # Graficar resultados
+                plt.figure(figsize=(12, 6))
+                plt.plot(k_values, train_scores, label='Entrenamiento', marker='o')
+                plt.plot(k_values, test_scores, label='Prueba', marker='o')
+                plt.xlabel('Valor de k')
+                plt.ylabel('Exactitud')
+                plt.title('Búsqueda del mejor k para KNN')
+                plt.legend()
+                plt.grid(True)
+                plt.show()
+                
+                # Encontrar el k óptimo
+                optimal_k = k_values[np.argmax(test_scores)]
+                print(f"\nEl valor óptimo de k es: {optimal_k}")
+                
+                return optimal_k
             
-            plt.subplot(1, 2, 2)
-            errors = y_test - y_pred
-            plt.hist(errors, bins=30)
-            plt.title('Distribución de Errores')
-            plt.xlabel('Error (Real - Predicho)')
-            plt.suptitle(f'KNN Regressor (k={best_params["k"]}, metric={best_params["metric"]})')
-            plt.tight_layout()
+            optimal_k = plot_k_search(X_train, y_train, X_test, y_test)
+            
+            ## 11. Evaluación final con el mejor modelo
+            print("\n Evaluación final con el mejor modelo")
+            final_knn = KNeighborsClassifier(
+                n_neighbors=optimal_k,
+                weights='distance',
+                metric='euclidean'
+            )
+            final_knn.fit(X_train, y_train)
+            y_pred_final = final_knn.predict(X_test)
+            
+            print("Exactitud:", accuracy_score(y_test, y_pred_final))
+            print("\nReporte de clasificación:")
+            print(classification_report(y_test, y_pred_final))
+            
+            # Matriz de confusión final
+            plt.figure(figsize=(8, 6))
+            cm = confusion_matrix(y_test, y_pred_final)
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Greens', 
+                        xticklabels=grade_map.keys(), yticklabels=grade_map.keys())
+            plt.title('Matriz de Confusión para el Modelo Final')
+            plt.xlabel('Predicho')
+            plt.ylabel('Real')
             plt.show()
+            
             print("")
             print("Desarrollado por: J.E. Carmona-Álvarez")
 
-Resultados: 
+**Resultados:**
 
-Optimizando hiperparámetros...
-Evaluando k: 100%|██████████| 15/15 [00:33<00:00,  2.26s/it]
+=== Información del Dataset ===
+Filas: 5000, Columnas: 23
 
-Top 5 combinaciones de parámetros:
-     k     metric  weight        mse
-57  29  euclidean   False  43.455829
-56  29  euclidean    True  43.515423
-53  27  euclidean   False  43.534223
-59  29  manhattan   False  43.561216
-55  27  manhattan   False  43.563866
+=== Primeras filas ===
+shape: (5, 23)
 
-Mejores parámetros: {'k': 29, 'metric': 'euclidean', 'weight': False}
-MSE promedio en validación cruzada: 43.4558
+![image](https://github.com/user-attachments/assets/87e8a09d-5b02-40a8-a42c-96075abbba83)
 
-Métricas finales en conjunto de prueba:
-MSE: 43.2106
-MAE: 5.6570
-R²: -0.0497
+=== Estadísticas descriptivas ===
+shape: (9, 24)
 
-![image](https://github.com/user-attachments/assets/68eff768-d0e0-43e0-bbc5-6ca56563322a)
+![image](https://github.com/user-attachments/assets/bcc63ddd-560a-40ca-bbb7-bcbd76afd95a)
+
+=== Tipos de datos ===
+Schema([('Student_ID', String), ('First_Name', String), ('Last_Name', String), ('Email', String), ('Gender', String), ('Age', Int64), ('Department', String), ('Attendance (%)', Float64), ('Midterm_Score', Float64), ('Final_Score', Float64), ('Assignments_Avg', Float64), ('Quizzes_Avg', Float64), ('Participation_Score', Float64), ('Projects_Score', Float64), ('Total_Score', Float64), ('Grade', String), ('Study_Hours_per_Week', Float64), ('Extracurricular_Activities', String), ('Internet_Access_at_Home', String), ('Parent_Education_Level', String), ('Family_Income_Level', String), ('Stress_Level (1-10)', Int64), ('Sleep_Hours_per_Night', Float64)])
+
+=== Valores faltantes ===
+shape: (1, 23)
+
+![image](https://github.com/user-attachments/assets/bfd11cbd-84d3-41dc-9c37-492a85383b73)
+
+=== Columnas seleccionadas ===
+['Student_ID', 'Gender', 'Age', 'Department', 'Attendance (%)', 'Midterm_Score', 'Final_Score', 'Assignments_Avg', 'Quizzes_Avg', 'Participation_Score', 'Projects_Score', 'Total_Score', 'Grade', 'Study_Hours_per_Week', 'Extracurricular_Activities', 'Internet_Access_at_Home', 'Parent_Education_Level', 'Family_Income_Level', 'Stress_Level (1-10)', 'Sleep_Hours_per_Night']
+
+![image](https://github.com/user-attachments/assets/1a0e2820-cfaa-4429-b413-855a4dca848c)
+![image](https://github.com/user-attachments/assets/ffdd1154-c1a2-4c2d-ae20-a5abce94de81)
+![image](https://github.com/user-attachments/assets/64d9ad19-564b-4157-8f8d-09f19a9fc51c)
+![image](https://github.com/user-attachments/assets/a1b35f53-9ef4-48b8-b5de-ebc624fe0dab)
+
+=== Datos después de transformación ===
+shape: (5, 20)
+
+![image](https://github.com/user-attachments/assets/16e8e00c-1b96-430b-ba6b-675918819bc0)
+
+=== KNN estándar (Euclidiana) ===
+Tiempo de entrenamiento: 0.10 segundos
+Exactitud: 0.21133333333333335
+
+Reporte de clasificación:
+              precision    recall  f1-score   support
+
+           0       0.19      0.27      0.22       301
+           1       0.20      0.19      0.20       303
+           2       0.18      0.19      0.18       293
+           3       0.25      0.21      0.23       304
+           4       0.27      0.20      0.23       299
+
+    accuracy                           0.21      1500
+   macro avg       0.22      0.21      0.21      1500
+weighted avg       0.22      0.21      0.21      1500
+
+
+=== KNN personalizado (Combinación Euclidiana + Hamming) ===
+Tiempo de entrenamiento: 101.63 segundos
+Exactitud: 0.22
+
+
+Reporte de clasificación:
+              precision    recall  f1-score   support
+
+           0       0.22      0.33      0.26       301
+           1       0.25      0.26      0.26       303
+           2       0.20      0.19      0.20       293
+           3       0.18      0.14      0.16       304
+           4       0.26      0.17      0.20       299
+
+    accuracy                           0.22      1500
+   macro avg       0.22      0.22      0.22      1500
+weighted avg       0.22      0.22      0.22      1500
+
+![image](https://github.com/user-attachments/assets/2099e4ab-7e49-4a77-b2f1-05e6b04c9f34)
+
+ Mejores parámetros para KNN estándar
+{'metric': 'manhattan', 'n_neighbors': 13, 'weights': 'distance'}
+Mejor exactitud: 0.21085714285714285
+
+Rendimiento del mejor modelo en conjunto de prueba
+Exactitud: 0.22533333333333333
+
+Reporte de clasificación:
+              precision    recall  f1-score   support
+
+           0       0.20      0.21      0.21       301
+           1       0.27      0.25      0.26       303
+           2       0.21      0.20      0.21       293
+           3       0.20      0.20      0.20       304
+           4       0.25      0.26      0.25       299
+
+    accuracy                           0.23      1500
+   macro avg       0.23      0.23      0.23      1500
+weighted avg       0.23      0.23      0.23      1500
+
+
+![image](https://github.com/user-attachments/assets/18a7a370-fd23-4aaa-88fe-4f520fefcfdb)
+
+El valor óptimo de k es: 1
+
+ Evaluación final con el mejor modelo
+Exactitud: 0.21866666666666668
+
+Reporte de clasificación:
+              precision    recall  f1-score   support
+
+           0       0.21      0.21      0.21       301
+           1       0.18      0.16      0.17       303
+           2       0.20      0.21      0.20       293
+           3       0.27      0.26      0.26       304
+           4       0.23      0.26      0.25       299
+
+    accuracy                           0.22      1500
+   macro avg       0.22      0.22      0.22      1500
+weighted avg       0.22      0.22      0.22      1500
+
+![image](https://github.com/user-attachments/assets/aaf952c0-bb9f-4abd-aeec-38df6d939777)
 
 Desarrollado por: J.E. Carmona-Álvarez
+
+**2.** Ajuste del entrenamiento del Modelo usando las librerias de Polars 
+
+            # Usando Librerias de PANDAS
+            
+            import pandas as pd
+            import numpy as np
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            from sklearn.model_selection import train_test_split, GridSearchCV
+            from sklearn.preprocessing import StandardScaler, LabelEncoder
+            from sklearn.neighbors import KNeighborsClassifier
+            from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+            from scipy.spatial.distance import mahalanobis
+            from scipy.stats import zscore
+            
+            # Configuración de visualización
+            plt.style.use('ggplot')
+            plt.rcParams['figure.figsize'] = (12, 6)
+            pd.set_option('display.max_columns', 50)
+            
+            # 1. Carga y exploración inicial de datos
+            df = pd.read_csv('Students_Grading_Dataset.csv')
+            
+            # Mostrar información básica del dataset
+            print("="*80)
+            print("Información básica del dataset:")
+            print(f"Filas: {df.shape[0]}, Columnas: {df.shape[1]}")
+            print("\nPrimeras 5 filas:")
+            print(df.head())
+            print("\nResumen estadístico:")
+            print(df.describe())
+            print("\nTipos de datos y valores nulos:")
+            print(df.info())
+            
+            # 2. Selección y análisis de columnas relevantes
+            # Eliminar columnas no relevantes para el modelado
+            columns_to_drop = ['Student_ID', 'First_Name', 'Last_Name', 'Email']
+            df = df.drop(columns=columns_to_drop)
+            
+            # Analizar correlación con la variable objetivo (Grade)
+            print("\n" + "="*80)
+            print("Análisis de correlación con la variable objetivo (Grade):")
+            numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+            correlation_with_grade = df[numeric_cols].corrwith(df['Total_Score']).sort_values(ascending=False)
+            print(correlation_with_grade)
+            
+            # 3. Análisis estadístico y visualización
+            # Visualización de distribución de la variable objetivo
+            plt.figure(figsize=(10, 5))
+            sns.countplot(data=df, x='Grade', order=sorted(df['Grade'].unique()))
+            plt.title('Distribución de Calificaciones (Grade)')
+            plt.show()
+            
+            # Visualización de relaciones entre variables
+            plt.figure(figsize=(12, 8))
+            sns.heatmap(df[numeric_cols].corr(), annot=True, fmt=".2f", cmap='coolwarm')
+            plt.title('Matriz de Correlación')
+            plt.show()
+            
+            # Visualización de variables importantes vs Grade
+            fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+            sns.boxplot(data=df, x='Grade', y='Total_Score', ax=axes[0, 0])
+            sns.boxplot(data=df, x='Grade', y='Midterm_Score', ax=axes[0, 1])
+            sns.boxplot(data=df, x='Grade', y='Final_Score', ax=axes[1, 0])
+            sns.boxplot(data=df, x='Grade', y='Assignments_Avg', ax=axes[1, 1])
+            plt.tight_layout()
+            plt.show()
+            
+            # 4. Transformación de datos
+            # Codificación de variables categóricas
+            categorical_cols = df.select_dtypes(include=['object']).columns
+            print("\n" + "="*80)
+            print("Variables categóricas a codificar:", categorical_cols)
+            
+            label_encoders = {}
+            for col in categorical_cols:
+                if col != 'Grade':  # No codificamos la variable objetivo todavía
+                    le = LabelEncoder()
+                    df[col] = le.fit_transform(df[col].astype(str))
+                    label_encoders[col] = le
+            
+            # Codificación de la variable objetivo (Grade)
+            grade_order = sorted(df['Grade'].unique())
+            grade_mapping = {grade: i for i, grade in enumerate(grade_order)}
+            df['Grade_encoded'] = df['Grade'].map(grade_mapping)
+            
+            # Manejo de valores atípicos usando z-score
+            numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+            numeric_cols = [col for col in numeric_cols if col != 'Grade_encoded']
+            
+            for col in numeric_cols:
+                z_scores = zscore(df[col])
+                df = df[(np.abs(z_scores) < 3)]  # Eliminar outliers con z-score > 3
+            
+            # 5. Preparación para modelado
+            # Separar características y variable objetivo
+            X = df.drop(['Grade', 'Grade_encoded'], axis=1)
+            y = df['Grade_encoded']
+            
+            # Dividir en conjuntos de entrenamiento y prueba
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+            
+            # Escalar características
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+            
+            # 6. Entrenamiento de modelo KNN con distancia personalizada
+            # Función de distancia personalizada (Mahalanobis)
+            def mahalanobis_distance(x, y, cov_inv):
+                diff = x - y
+                return np.sqrt(np.dot(np.dot(diff, cov_inv), diff.T))
+            
+            # Calcular matriz de covarianza inversa para Mahalanobis
+            cov_matrix = np.cov(X_train_scaled, rowvar=False)
+            cov_inv = np.linalg.inv(cov_matrix)
+            
+            # Crear función de distancia personalizada para KNN
+            def custom_distance(x, y):
+                return mahalanobis_distance(x, y, cov_inv)
+            
+            # Entrenar modelo KNN con distancia personalizada
+            knn_custom = KNeighborsClassifier(n_neighbors=5, metric=custom_distance)
+            knn_custom.fit(X_train_scaled, y_train)
+            
+            # 7. Evaluación del modelo
+            y_pred = knn_custom.predict(X_test_scaled)
+            
+            print("\n" + "="*80)
+            print("Evaluación del Modelo KNN con Distancia Personalizada:")
+            print("\nReporte de Clasificación:")
+            print(classification_report(y_test, y_pred, target_names=grade_order))
+            
+            print("\nMatriz de Confusión:")
+            conf_matrix = confusion_matrix(y_test, y_pred)
+            sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+                        xticklabels=grade_order, yticklabels=grade_order)
+            plt.title('Matriz de Confusión')
+            plt.xlabel('Predicho')
+            plt.ylabel('Real')
+            plt.show()
+            
+            print(f"\nPrecisión del modelo: {accuracy_score(y_test, y_pred):.2f}")
+            
+            # 8. Optimización del modelo
+            # Búsqueda de hiperparámetros óptimos
+            param_grid = {
+                'n_neighbors': range(3, 15),
+                'weights': ['uniform', 'distance'],
+                'p': [1, 2]  # Para distancia Manhattan (1) y Euclidiana (2)
+            }
+            
+            # Usar distancia estándar para la optimización (más rápida)
+            knn = KNeighborsClassifier()
+            grid_search = GridSearchCV(knn, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+            grid_search.fit(X_train_scaled, y_train)
+            
+            print("\n" + "="*80)
+            print("Optimización de Hiperparámetros:")
+            print(f"Mejores parámetros: {grid_search.best_params_}")
+            print(f"Mejor precisión en validación cruzada: {grid_search.best_score_:.2f}")
+            
+            # Evaluar modelo optimizado
+            best_knn = grid_search.best_estimator_
+            y_pred_optimized = best_knn.predict(X_test_scaled)
+            
+            print("\nEvaluación del Modelo Optimizado:")
+            print(classification_report(y_test, y_pred_optimized, target_names=grade_order))
+            print(f"Precisión del modelo optimizado: {accuracy_score(y_test, y_pred_optimized):.2f}")
+            
+            # Visualizar importancia de características (basado en distancia)
+            feature_importance = np.mean(np.abs(scaler.inverse_transform(X_train_scaled)), axis=0)
+            sorted_idx = np.argsort(feature_importance)
+            
+            plt.figure(figsize=(12, 8))
+            plt.barh(range(len(sorted_idx)), feature_importance[sorted_idx], align='center')
+            plt.yticks(range(len(sorted_idx)), X.columns[sorted_idx])
+            plt.title('Importancia de Características (basado en magnitud promedio)')
+            plt.xlabel('Magnitud Promedio')
+            plt.tight_layout()
+            plt.show()
+            
+            print("")
+            print("Desarrollado por: J.E. Carmona-Álvarez")
+
+**Resultados:**
+
+Información básica del dataset:
+Filas: 5000, Columnas: 23
+
+Primeras 5 filas:
+  Student_ID First_Name Last_Name                    Email  Gender  Age  \
+0      S1000       Omar  Williams  student0@university.com  Female   22   
+1      S1001      Maria     Brown  student1@university.com    Male   18   
+2      S1002      Ahmed     Jones  student2@university.com    Male   24   
+3      S1003       Omar  Williams  student3@university.com  Female   24   
+4      S1004       John     Smith  student4@university.com  Female   23   
+
+    Department  Attendance (%)  Midterm_Score  Final_Score  Assignments_Avg  \
+0  Mathematics           97.36          40.61        59.61            73.69   
+1     Business           97.71          57.27        74.00            74.23   
+2  Engineering           99.52          41.84        63.85            85.85   
+3  Engineering           90.38          45.65        44.44            68.10   
+4           CS           59.41          53.13        61.77            67.66   
+
+   Quizzes_Avg  Participation_Score  Projects_Score  Total_Score Grade  \
+0        53.17                 7.34           62.84        83.49     C   
+1        98.23                 8.80           98.23        92.29     F   
+2        50.00                 0.47           91.22        93.55     F   
+3        66.27                 0.42           55.48        51.03     A   
+4        83.98                 6.43           87.43        90.91     A   
+
+   Study_Hours_per_Week Extracurricular_Activities Internet_Access_at_Home  \
+0                  10.3                        Yes                      No   
+1                  27.1                         No                      No   
+2                  12.4                        Yes                      No   
+3                  25.5                         No                     Yes   
+4                  13.3                        Yes                      No   
+
+  Parent_Education_Level Family_Income_Level  Stress_Level (1-10)  \
+0               Master's              Medium                    1   
+1            High School                 Low                    4   
+2            High School                 Low                    9   
+3            High School                 Low                    8   
+4               Master's              Medium                    6   
+
+   Sleep_Hours_per_Night  
+0                    5.9  
+1                    4.3  
+2                    6.1  
+3                    4.9  
+4                    4.5  
+
+Resumen estadístico:
+               Age  Attendance (%)  Midterm_Score  Final_Score  \
+count  5000.000000     5000.000000    5000.000000  5000.000000   
+mean     21.048400       75.356076      70.701924    69.546552   
+std       1.989786       14.392716      17.436325    17.108996   
+min      18.000000       50.010000      40.000000    40.010000   
+25%      19.000000       62.945000      55.707500    54.697500   
+50%      21.000000       75.670000      70.860000    69.485000   
+75%      23.000000       87.862500      85.760000    83.922500   
+max      24.000000      100.000000      99.990000    99.980000   
+
+       Assignments_Avg  Quizzes_Avg  Participation_Score  Projects_Score  \
+count      5000.000000  5000.000000          5000.000000      5000.00000   
+mean         74.956320    74.836214             4.996372        74.78305   
+std          14.404287    14.423848             2.898978        14.54243   
+min          50.000000    50.000000             0.000000        50.00000   
+25%          62.340000    62.357500             2.507500        61.97000   
+50%          75.090000    74.905000             4.960000        74.54000   
+75%          87.352500    87.292500             7.550000        87.63000   
+max          99.990000    99.990000            10.000000       100.00000   
+
+       Total_Score  Study_Hours_per_Week  Stress_Level (1-10)  \
+count  5000.000000           5000.000000          5000.000000   
+mean     75.021860             17.521140             5.507200   
+std      14.323246              7.193035             2.886662   
+min      50.010000              5.000000             1.000000   
+25%      62.710000             11.500000             3.000000   
+50%      75.345000             17.400000             6.000000   
+75%      87.060000             23.700000             8.000000   
+max      99.990000             30.000000            10.000000   
+
+       Sleep_Hours_per_Night  
+count            5000.000000  
+mean                6.514420  
+std                 1.446155  
+min                 4.000000  
+25%                 5.300000  
+50%                 6.500000  
+75%                 7.800000  
+max                 9.000000  
+
+Tipos de datos y valores nulos:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5000 entries, 0 to 4999
+Data columns (total 23 columns):
+ #   Column                      Non-Null Count  Dtype  
+---  ------                      --------------  -----  
+ 0   Student_ID                  5000 non-null   object 
+ 1   First_Name                  5000 non-null   object 
+ 2   Last_Name                   5000 non-null   object 
+ 3   Email                       5000 non-null   object 
+ 4   Gender                      5000 non-null   object 
+ 5   Age                         5000 non-null   int64  
+ 6   Department                  5000 non-null   object 
+ 7   Attendance (%)              5000 non-null   float64
+ 8   Midterm_Score               5000 non-null   float64
+ 9   Final_Score                 5000 non-null   float64
+ 10  Assignments_Avg             5000 non-null   float64
+ 11  Quizzes_Avg                 5000 non-null   float64
+ 12  Participation_Score         5000 non-null   float64
+ 13  Projects_Score              5000 non-null   float64
+ 14  Total_Score                 5000 non-null   float64
+ 15  Grade                       5000 non-null   object 
+ 16  Study_Hours_per_Week        5000 non-null   float64
+ 17  Extracurricular_Activities  5000 non-null   object 
+ 18  Internet_Access_at_Home     5000 non-null   object 
+ 19  Parent_Education_Level      3975 non-null   object 
+ 20  Family_Income_Level         5000 non-null   object 
+ 21  Stress_Level (1-10)         5000 non-null   int64  
+ 22  Sleep_Hours_per_Night       5000 non-null   float64
+dtypes: float64(10), int64(2), object(11)
+memory usage: 898.6+ KB
+None
+
+================================================================================
+Análisis de correlación con la variable objetivo (Grade):
+Total_Score              1.000000
+Assignments_Avg          0.019396
+Final_Score              0.017360
+Age                      0.000375
+Participation_Score     -0.001425
+Midterm_Score           -0.002094
+Quizzes_Avg             -0.005570
+Stress_Level (1-10)     -0.007114
+Attendance (%)          -0.009283
+Study_Hours_per_Week    -0.009479
+Sleep_Hours_per_Night   -0.017710
+Projects_Score          -0.027344
+dtype: float64
+
+![image](https://github.com/user-attachments/assets/dbbb88b8-1754-4b56-a5d2-9fbf3fe3d7cc)
+![image](https://github.com/user-attachments/assets/9d0c212f-feed-4052-8d9e-a63e9a38cd7e)
+![image](https://github.com/user-attachments/assets/ad2f7919-0c32-45a6-8a1d-9b1ae7c33002)
+
+================================================================================
+Variables categóricas a codificar: Index(['Gender', 'Department', 'Grade', 'Extracurricular_Activities',
+       'Internet_Access_at_Home', 'Parent_Education_Level',
+       'Family_Income_Level'],
+      dtype='object')
+
+================================================================================
+Evaluación del Modelo KNN con Distancia Personalizada:
+
+Reporte de Clasificación:
+              precision    recall  f1-score   support
+
+           A       0.22      0.30      0.25       299
+           B       0.19      0.21      0.20       304
+           C       0.23      0.23      0.23       293
+           D       0.20      0.16      0.18       303
+           F       0.19      0.13      0.15       301
+
+    accuracy                           0.21      1500
+   macro avg       0.20      0.21      0.20      1500
+weighted avg       0.20      0.21      0.20      1500
+
+
+Matriz de Confusión:
+![image](https://github.com/user-attachments/assets/e54ae657-1ad2-44a0-a573-206cc4f04ee5)
+
+Precisión del modelo: 0.21
+
+================================================================================
+Optimización de Hiperparámetros:
+Mejores parámetros: {'n_neighbors': 3, 'p': 1, 'weights': 'distance'}
+Mejor precisión en validación cruzada: 0.22
+
+Evaluación del Modelo Optimizado:
+              precision    recall  f1-score   support
+
+           A       0.22      0.21      0.22       299
+           B       0.17      0.18      0.17       304
+           C       0.21      0.21      0.21       293
+           D       0.24      0.25      0.24       303
+           F       0.21      0.19      0.20       301
+
+    accuracy                           0.21      1500
+   macro avg       0.21      0.21      0.21      1500
+weighted avg       0.21      0.21      0.21      1500
+
+Precisión del modelo optimizado: 0.21
+
+![image](https://github.com/user-attachments/assets/41eae6ba-5213-4da1-b469-38660442e0d3)
+
+Desarrollado por: J.E. Carmona-Álvarez
+
+            from sklearn.metrics import mean_squared_error
+            
+            # Evaluar diferentes valores de k
+            error_rates = []
+            mse_scores = []
+            k_range = range(1, 21)
+            
+            for k in k_range:
+                knn_model = KNeighborsClassifier(n_neighbors=k)
+                knn_model.fit(X_train_scaled, y_train)
+                y_pred_k = knn_model.predict(X_test_scaled)
+                acc = accuracy_score(y_test, y_pred_k)
+                mse = mean_squared_error(y_test, y_pred_k)
+                error_rates.append(1 - acc)
+                mse_scores.append(mse)
+            
+            # Visualización del Error y MSE
+            plt.figure(figsize=(14, 6))
+            
+            plt.subplot(1, 2, 1)
+            plt.plot(k_range, error_rates, marker='o', linestyle='--', color='red')
+            plt.title('Error rate vs. K Value')
+            plt.xlabel('Número de Vecinos (k)')
+            plt.ylabel('Error de Clasificación')
+            
+            plt.subplot(1, 2, 2)
+            plt.plot(k_range, mse_scores, marker='s', linestyle='-', color='blue')
+            plt.title('MSE vs. K Value')
+            plt.xlabel('Número de Vecinos (k)')
+            plt.ylabel('Error Cuadrático Medio (MSE)')
+            
+            plt.tight_layout()
+            plt.show()
+            
+            # Mostrar el mejor k en términos de menor MSE
+            best_k_mse = k_range[np.argmin(mse_scores)]
+            print(f"\nMejor valor de k según MSE: {best_k_mse}")
+            print(f"MSE mínimo: {min(mse_scores):.4f}")
+            
+            print("")
+            print("Desarrollado por: J.E. Carmona-Álvarez")
+
+**Resultados:**
+![image](https://github.com/user-attachments/assets/82ff2dc1-d32b-4837-b436-811784cd358c)
+
+Mejor valor de k según MSE: 2
+MSE mínimo: 3.9013
+
+Desarrollado por: J.E. Carmona-Álvarez
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
