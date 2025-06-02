@@ -668,134 +668,129 @@ Estadísticas descriptivas:
 
 Cargando datos para el torneo masculino...
 
-Columnas en cada archivo:
-Teams: ['TeamID', 'TeamName', 'FirstD1Season', 'LastD1Season']
-Seeds: ['Season', 'Seed', 'TeamID']
-Regular: ['Season', 'DayNum', 'WTeamID', 'WScore', 'LTeamID', 'LScore', 'WLoc', 'NumOT']
-Tourney: ['Season', 'DayNum', 'WTeamID', 'WScore', 'LTeamID', 'LScore', 'WLoc', 'NumOT']
-
-
 _**PREDICCIONES TORNEO MASCULINO 2025**_
 
-
 RONDA 1:
-  Duke vs Arizona
-  Probabilidad: 0.52 -> GANADOR: Arizona
+  54 vs 48
+  Probabilidad: 1.00 -> GANADOR: 54
   ----------------------------------------
-  Houston vs Purdue
-  Probabilidad: 0.50 -> GANADOR: Purdue
+  46 vs 48
+  Probabilidad: 1.00 -> GANADOR: 48
   ----------------------------------------
-  Florida vs Maryland
-  Probabilidad: 0.51 -> GANADOR: Florida
+  45 vs 42
+  Probabilidad: 0.99 -> GANADOR: 45
   ----------------------------------------
-  Auburn vs Texas A&M
-  Probabilidad: 0.54 -> GANADOR: Texas A&M
+  43 vs 46
+  Probabilidad: 0.96 -> GANADOR: 43
   ----------------------------------------
-  Michigan St vs Iowa St
-  Probabilidad: 0.53 -> GANADOR: Michigan St
+  45 vs 47
+  Probabilidad: 1.00 -> GANADOR: 45
   ----------------------------------------
-  St John's vs Texas Tech
-  Probabilidad: 0.52 -> GANADOR: St John's
+  45 vs 45
+  Probabilidad: 0.98 -> GANADOR: 45
   ----------------------------------------
-  Tennessee vs Kentucky
-  Probabilidad: 0.52 -> GANADOR: Tennessee
+  46 vs 49
+  Probabilidad: 1.00 -> GANADOR: 49
   ----------------------------------------
-  Alabama vs Wisconsin
-  Probabilidad: 0.55 -> GANADOR: Wisconsin
+  42 vs 43
+  Probabilidad: 0.80 -> GANADOR: 42
   ----------------------------------------
 
 RONDA 2:
-  Florida vs Tennessee
-  Probabilidad: 0.51 -> GANADOR: Tennessee
+  54 vs 45
+  Probabilidad: 1.00 -> GANADOR: 54
   ----------------------------------------
-  St John's vs Michigan St
-  Probabilidad: 0.50 -> GANADOR: St John's
+  43 vs 45
+  Probabilidad: 1.00 -> GANADOR: 45
   ----------------------------------------
-  Wisconsin vs Texas A&M
-  Probabilidad: 0.53 -> GANADOR: Wisconsin
+  42 vs 45
+  Probabilidad: 1.00 -> GANADOR: 42
   ----------------------------------------
-  Arizona vs Purdue
-  Probabilidad: 0.55 -> GANADOR: Purdue
+  49 vs 48
+  Probabilidad: 1.00 -> GANADOR: 49
   ----------------------------------------
 
 SWEET 16:
-  Tennessee vs St John's
-  Probabilidad: 0.52 -> GANADOR: St John's
+  54 vs 45
+  Probabilidad: 1.00 -> GANADOR: 54
   ----------------------------------------
-  Wisconsin vs Purdue
-  Probabilidad: 0.55 -> GANADOR: Wisconsin
+  42 vs 49
+  Probabilidad: 1.00 -> GANADOR: 49
   ----------------------------------------
 
 ELITE 8:
-  St John's vs Wisconsin
-  Probabilidad: 0.54 -> GANADOR: Wisconsin
+  54 vs 49
+  Probabilidad: 1.00 -> GANADOR: 54
   ----------------------------------------
 
 No hay suficientes equipos para continuar (1 restantes)
 
-Cargando datos para el torneo femenino...
+Predicciones guardadas en ncaa_M_predictions_2025.csv
 
-Columnas en cada archivo:
-Teams: ['TeamID', 'TeamName']
-Seeds: ['Season', 'Seed', 'TeamID']
-Regular: ['Season', 'DayNum', 'WTeamID', 'WScore', 'LTeamID', 'LScore', 'WLoc', 'NumOT']
-Tourney: ['Season', 'DayNum', 'WTeamID', 'WScore', 'LTeamID', 'LScore', 'WLoc', 'NumOT']
+Cargando datos para el torneo femenino...
 
 _**PREDICCIONES TORNEO FEMENINO 2025**_
 
 RONDA 1:
-  South Carolina vs Maryland
-  Probabilidad: 0.55 -> GANADOR: South Carolina
+  43 vs 54
+  Probabilidad: 0.98 -> GANADOR: 54
   ----------------------------------------
-  Texas vs Ohio St
-  Probabilidad: 0.52 -> GANADOR: Texas
+  50 vs 43
+  Probabilidad: 0.60 -> GANADOR: 43
   ----------------------------------------
-  USC vs Kentucky
-  Probabilidad: 0.53 -> GANADOR: USC
+  46 vs 46
+  Probabilidad: 0.98 -> GANADOR: 46
   ----------------------------------------
-  UCLA vs Baylor
-  Probabilidad: 0.55 -> GANADOR: UCLA
+  44 vs 52
+  Probabilidad: 1.00 -> GANADOR: 52
   ----------------------------------------
-  NC State vs LSU
-  Probabilidad: 0.51 -> GANADOR: NC State
+  45 vs 41
+  Probabilidad: 0.95 -> GANADOR: 41
   ----------------------------------------
-  Connecticut vs Oklahoma
-  Probabilidad: 0.53 -> GANADOR: Oklahoma
+  48 vs 52
+  Probabilidad: 1.00 -> GANADOR: 48
   ----------------------------------------
-  TCU vs Notre Dame
-  Probabilidad: 0.54 -> GANADOR: TCU
+  41 vs 38
+  Probabilidad: 1.00 -> GANADOR: 38
   ----------------------------------------
-  Duke vs North Carolina
-  Probabilidad: 0.53 -> GANADOR: Duke
+  44 vs 45
+  Probabilidad: 0.99 -> GANADOR: 44
   ----------------------------------------
 
 RONDA 2:
-  South Carolina vs Texas
-  Probabilidad: 0.50 -> GANADOR: South Carolina
+  44 vs 48
+  Probabilidad: 1.00 -> GANADOR: 48
   ----------------------------------------
-  USC vs UCLA
-  Probabilidad: 0.53 -> GANADOR: USC
+  38 vs 41
+  Probabilidad: 1.00 -> GANADOR: 38
   ----------------------------------------
-  NC State vs TCU
-  Probabilidad: 0.51 -> GANADOR: NC State
+  52 vs 46
+  Probabilidad: 1.00 -> GANADOR: 52
   ----------------------------------------
-  Duke vs Oklahoma
-  Probabilidad: 0.52 -> GANADOR: Duke
+  43 vs 54
+  Probabilidad: 0.90 -> GANADOR: 54
   ----------------------------------------
 
 SWEET 16:
-  South Carolina vs USC
-  Probabilidad: 0.54 -> GANADOR: USC
+  48 vs 38
+  Probabilidad: 1.00 -> GANADOR: 48
   ----------------------------------------
-  NC State vs Duke
-  Probabilidad: 0.54 -> GANADOR: NC State
+  52 vs 54
+  Probabilidad: 1.00 -> GANADOR: 52
   ----------------------------------------
 
 ELITE 8:
-  USC vs NC State
-  Probabilidad: 0.51 -> GANADOR: USC
+  48 vs 52
+  Probabilidad: 1.00 -> GANADOR: 48
   ----------------------------------------
 
 No hay suficientes equipos para continuar (1 restantes)
+
+Predicciones guardadas en ncaa_W_predictions_2025.csv
+
+_**Resumen de archivos generados:**_
+
+- Predicciones masculinas: ncaa_M_predictions_2025.csv
+- Predicciones femeninas: ncaa_W_predictions_2025.csv
 
 Desarrollado por: J.E. Carmona Alvarez & J. Ortiz-Aguilar
