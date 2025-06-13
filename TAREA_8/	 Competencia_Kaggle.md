@@ -446,10 +446,7 @@ Estadísticas descriptivas:
 
         import pandas as pd
         import numpy as np
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.model_selection import train_test_split
-        import xgboost as xgb
-        from itertools import combinations
+        import os
         
         def load_and_validate_data(gender):
             """Carga y valida los datos con manejo de errores mejorado"""
@@ -460,22 +457,8 @@ Estadísticas descriptivas:
                 # Cargar archivos con verificación
                 teams = pd.read_csv(f'{prefix}Teams.csv')
                 seeds = pd.read_csv(f'{prefix}NCAATourneySeeds.csv')
-                regular = pd.read_csv(f'{prefix}RegularSeasonCompactResults.csv')  # Usamos versión compacta
+                regular = pd.read_csv(f'{prefix}RegularSeasonCompactResults.csv')
                 tourney = pd.read_csv(f'{prefix}NCAATourneyCompactResults.csv')
-        
-                # Verificar columnas disponibles
-                print("\nColumnas en cada archivo:")
-                print(f"Teams: {teams.columns.tolist()}")
-                print(f"Seeds: {seeds.columns.tolist()}")
-                print(f"Regular: {regular.columns.tolist()}")
-                print(f"Tourney: {tourney.columns.tolist()}")
-        
-                # Renombrar columnas si es necesario (para compatibilidad)
-                if 'WTeamID' not in regular.columns:
-                    if 'Winner' in regular.columns:  # Ejemplo de adaptación
-                        regular = regular.rename(columns={'Winner': 'WTeamID', 'Loser': 'LTeamID'})
-                    else:
-                        raise ValueError("No se encontraron columnas de equipos ganadores/perdedores")
         
                 return teams, seeds, regular, tourney
         
@@ -487,15 +470,28 @@ Estadísticas descriptivas:
             """Construye un modelo simple basado en semillas y puntuaciones"""
             try:
                 # Calcular estadísticas básicas
-                win_stats = regular_data.groupby('WTeamID')['WScore'].mean().reset_index()
-                loss_stats = regular_data.groupby('LTeamID')['LScore'].mean().reset_index()
+                win_stats = regular_data.groupby('WTeamID').agg({
+                    'WScore': ['mean', 'max', 'min'],
+                    'LTeamID': 'count'
+                }).reset_index()
+                win_stats.columns = ['TeamID', 'OffenseAvg', 'OffenseMax', 'OffenseMin', 'Wins']
+        
+                loss_stats = regular_data.groupby('LTeamID').agg({
+                    'LScore': ['mean', 'max', 'min'],
+                    'WTeamID': 'count'
+                }).reset_index()
+                loss_stats.columns = ['TeamID', 'DefenseAvg', 'DefenseMax', 'DefenseMin', 'Losses']
         
                 team_stats = pd.merge(
-                    win_stats.rename(columns={'WTeamID': 'TeamID', 'WScore': 'Offense'}),
-                    loss_stats.rename(columns={'LTeamID': 'TeamID', 'LScore': 'Defense'}),
+                    win_stats,
+                    loss_stats,
                     on='TeamID',
                     how='outer'
                 ).fillna(0)
+        
+                # Calcular porcentaje de victorias
+                team_stats['WinPct'] = team_stats['Wins'] / (team_stats['Wins'] + team_stats['Losses'])
+                team_stats['Strength'] = team_stats['OffenseAvg'] * 0.7 + team_stats['DefenseAvg'] * 0.3
         
                 return team_stats
         
@@ -510,7 +506,7 @@ Estadísticas descriptivas:
                 seeds = seeds[seeds['Season'] == current_season].copy()
                 seeds['SeedNum'] = seeds['Seed'].str.extract('(\d+)').astype(int)
         
-                # Combinar con estadísticas
+                # Combinar con estadísticas y datos de equipos
                 predictions = seeds.merge(
                     team_stats,
                     on='TeamID',
@@ -521,100 +517,115 @@ Estadísticas descriptivas:
                     how='left'
                 )
         
-                # Si faltan estadísticas, usar solo la semilla
-                predictions['Offense'] = predictions['Offense'].fillna(80 - predictions['SeedNum'])
-                predictions['Defense'] = predictions['Defense'].fillna(60 + predictions['SeedNum'])
+                # Si faltan estadísticas, usar valores basados en semilla
+                predictions['OffenseAvg'] = predictions['OffenseAvg'].fillna(80 - predictions['SeedNum'])
+                predictions['DefenseAvg'] = predictions['DefenseAvg'].fillna(60 + predictions['SeedNum'])
+                predictions['Strength'] = predictions['Strength'].fillna(
+                    predictions['OffenseAvg'] * 0.7 + predictions['DefenseAvg'] * 0.3
+                )
         
-                return predictions[['TeamID', 'TeamName', 'Seed', 'SeedNum', 'Offense', 'Defense']]
+                return predictions
         
             except Exception as e:
                 print(f"Error generando predicciones: {e}")
                 return None
         
         def simulate_round(teams_df, round_name):
-            """Simula una ronda del torneo"""
+            """Simula una ronda del torneo y devuelve resultados detallados"""
             try:
                 # Ordenar por semilla
                 sorted_teams = teams_df.sort_values('SeedNum')
                 winners = []
-                results = []
+                detailed_results = []
         
                 # Determinar emparejamientos según la ronda
                 if round_name == "Ronda 1":
-                    # Emparejar 1 vs 16, 2 vs 15, etc.
                     top = sorted_teams.iloc[:8]
                     bottom = sorted_teams.iloc[8:16].iloc[::-1]
-                    matchups = list(zip(top.values, bottom.values))
+                    matchups = list(zip(top.iterrows(), bottom.iterrows()))
                 elif round_name == "Ronda 2":
-                    # Emparejar ganadores de Ronda 1
                     if len(sorted_teams) == 8:
-                        matchups = list(zip(sorted_teams.iloc[::2].values, sorted_teams.iloc[1::2].values))
+                        matchups = list(zip(sorted_teams.iloc[::2].iterrows(), sorted_teams.iloc[1::2].iterrows()))
                     else:
                         matchups = []
                 elif round_name == "Sweet 16":
                     if len(sorted_teams) == 4:
-                        matchups = list(zip(sorted_teams.iloc[::2].values, sorted_teams.iloc[1::2].values))
+                        matchups = list(zip(sorted_teams.iloc[::2].iterrows(), sorted_teams.iloc[1::2].iterrows()))
                     else:
                         matchups = []
                 elif round_name == "Elite 8":
                     if len(sorted_teams) == 2:
-                        matchups = [(sorted_teams.iloc[0].values, sorted_teams.iloc[1].values)]
+                        matchups = [(sorted_teams.iloc[0:1].iterrows().__next__(), sorted_teams.iloc[1:2].iterrows().__next__())]
                     else:
                         matchups = []
                 else:
                     matchups = []
         
-                for team1, team2 in matchups:
-                    # Calcular probabilidad simple basada en semillas y estadísticas
-                    prob = 0.5 + (team2[4] - team1[4])/100  # Ajuste basado en ofensa
-        
+                for (_, team1), (_, team2) in matchups:
+                    # Calcular probabilidad basada en estadísticas
+                    prob = 1 / (1 + np.exp(-(team1['Strength'] - team2['Strength'])/10))
+                    
                     if prob >= 0.5:
                         winner = team1
-                        prob = min(0.95, prob)  # Limitar probabilidad máxima
+                        winner_prob = prob
                     else:
                         winner = team2
-                        prob = max(0.05, 1-prob)
+                        winner_prob = 1 - prob
         
-                    results.append({
-                        'Ronda': round_name,
-                        'Equipo1': team1[1],  # TeamName
-                        'Equipo2': team2[1],
-                        'Probabilidad': f"{prob:.2f}",
-                        'Ganador': winner[1]
+                    # Resultados detallados para CSV
+                    detailed_results.append({
+                        'Round': round_name,
+                        'Team1_ID': team1['TeamID'],
+                        'Team1_Name': team1['TeamName'],
+                        'Team1_Seed': team1['Seed'],
+                        'Team1_OffenseAvg': team1['OffenseAvg'],
+                        'Team1_DefenseAvg': team1['DefenseAvg'],
+                        'Team1_Strength': team1['Strength'],
+                        'Team2_ID': team2['TeamID'],
+                        'Team2_Name': team2['TeamName'],
+                        'Team2_Seed': team2['Seed'],
+                        'Team2_OffenseAvg': team2['OffenseAvg'],
+                        'Team2_DefenseAvg': team2['DefenseAvg'],
+                        'Team2_Strength': team2['Strength'],
+                        'Probability': winner_prob,
+                        'Predicted_Winner_ID': winner['TeamID'],
+                        'Predicted_Winner_Name': winner['TeamName']
                     })
+        
                     winners.append(winner)
         
-                # Crear DataFrames de resultados y ganadores
-                results_df = pd.DataFrame(results)
+                # Crear DataFrames
+                detailed_df = pd.DataFrame(detailed_results)
+                
                 if winners:
-                    winners_df = pd.DataFrame(winners, columns=teams_df.columns)
+                    winners_df = pd.DataFrame(winners)
                 else:
                     winners_df = pd.DataFrame(columns=teams_df.columns)
         
-                return results_df, winners_df
+                return winners_df, detailed_df
         
             except Exception as e:
                 print(f"Error en simulate_round: {e}")
-                return pd.DataFrame(), pd.DataFrame(columns=teams_df.columns)
+                return pd.DataFrame(columns=teams_df.columns), pd.DataFrame()
         
-        def display_round_results(results_df):
-            """Muestra los resultados de una ronda"""
+        def save_combined_predictions(all_predictions, filename='submission.csv'):
+            """Guarda todas las predicciones en un solo archivo CSV"""
             try:
-                if results_df.empty:
-                    print("\nNo hay resultados para mostrar en esta ronda.")
-                    return
-        
-                if 'Ronda' in results_df.columns:
-                    print(f"\n{results_df['Ronda'].iloc[0].upper()}:")
-                else:
-                    print("\nResultados de la ronda:")
-        
-                for _, row in results_df.iterrows():
-                    print(f"  {row['Equipo1']} vs {row['Equipo2']}")
-                    print(f"  Probabilidad: {row['Probabilidad']} -> GANADOR: {row['Ganador']}")
-                    print("  " + "-"*40)
+                # Combinar todas las predicciones
+                combined_df = pd.concat(all_predictions, ignore_index=True)
+                
+                # Ordenar por género y ronda
+                combined_df = combined_df.sort_values(['Gender', 'Round'])
+                
+                # Guardar CSV
+                combined_df.to_csv(filename, index=False)
+                print(f"\nPredicciones combinadas guardadas en {filename}")
+                
+                return filename
+                
             except Exception as e:
-                print(f"Error mostrando resultados: {e}")
+                print(f"Error guardando predicciones combinadas: {e}")
+                return None
         
         def predict_tournament(gender):
             """Predice el torneo completo para un género"""
@@ -622,175 +633,142 @@ Estadísticas descriptivas:
                 # Cargar datos
                 teams, seeds, regular, tourney = load_and_validate_data(gender)
                 if teams is None:
-                    return
+                    return None
         
                 # Construir modelo simple
                 team_stats = build_simple_model(regular)
                 if team_stats is None:
-                    return
+                    return None
         
                 # Predecir ganadores
                 predictions = predict_winners(team_stats, seeds, teams)
                 if predictions is None:
-                    return
+                    return None
         
                 # Simular rondas
-                round_names = ["Ronda 1", "Ronda 2", "Sweet 16", "Elite 8", "Final Four", "Final"]
+                round_names = ["Ronda 1", "Ronda 2", "Sweet 16", "Elite 8", "Final"]
+                all_detailed_results = []
+                current_teams = predictions.copy()
         
                 print(f"\n{'*'*50}")
                 print(f"PREDICCIONES TORNEO {'MASCULINO' if gender == 'M' else 'FEMENINO'} 2025")
                 print(f"{'*'*50}")
-        
-                current_teams = predictions.copy()
         
                 for round_name in round_names:
                     if len(current_teams) < 2:
                         print(f"\nNo hay suficientes equipos para continuar ({len(current_teams)} restantes)")
                         break
         
-                    results, winners = simulate_round(current_teams, round_name)
-                    display_round_results(results)
+                    winners, detailed = simulate_round(current_teams, round_name)
+                    
+                    if not detailed.empty:
+                        all_detailed_results.append(detailed)
+                    
                     current_teams = winners
+        
+                # Añadir género a los resultados
+                if all_detailed_results:
+                    detailed_df = pd.concat(all_detailed_results, ignore_index=True)
+                    detailed_df['Gender'] = 'M' if gender == 'M' else 'F'
+                    return detailed_df
+                else:
+                    print("\nNo se generaron predicciones para este torneo.")
+                    return None
         
             except Exception as e:
                 print(f"Error en predict_tournament: {e}")
+                return None
         
-        # Ejecutar predicciones
-        print("PREDICCIÓN DE GANADORES POR RONDA - NCAA 2025")
-        predict_tournament('M')  # Torneo masculino
-        predict_tournament('W')  # Torneo femenino
+        # Ejecutar predicciones y guardar resultados
+        print("PREDICCIÓN COMBINADA DE GANADORES - NCAA 2025")
+        
+        # Predecir ambos torneos y combinar resultados
+        male_predictions = predict_tournament('M')
+        female_predictions = predict_tournament('W')
+        
+        # Combinar todos los resultados en un solo DataFrame
+        all_predictions = []
+        if male_predictions is not None:
+            all_predictions.append(male_predictions)
+        if female_predictions is not None:
+            all_predictions.append(female_predictions)
+        
+        if all_predictions:
+            # Guardar archivo combinado
+            combined_file = save_combined_predictions(all_predictions)
+            
+            # Mostrar resumen
+            print("\nResumen de predicciones combinadas:")
+            combined_df = pd.concat(all_predictions, ignore_index=True)
+            print(combined_df[['Gender', 'Round', 'Team1_Name', 'Team2_Name', 'Probability', 'Predicted_Winner_Name']].to_string(index=False))
+            
+            if combined_file:
+                print(f"\nArchivo combinado generado con éxito: {combined_file}")
+        else:
+            print("\nNo se generaron predicciones para guardar.")
+        
+        print("\nProceso completado.")
         
         print("\nDesarrollado por: J.E. Carmona Alvarez & J. Ortiz-Aguilar")
 
 **_RESULTADOS:_**
 
-**PREDICCIÓN DE GANADORES POR RONDA - NCAA 2025**
+PREDICCIÓN COMBINADA DE GANADORES - NCAA 2025
 
 Cargando datos para el torneo masculino...
 
-_**PREDICCIONES TORNEO MASCULINO 2025**_
-
-RONDA 1:
-  54 vs 48
-  Probabilidad: 1.00 -> GANADOR: 54
-  ----------------------------------------
-  46 vs 48
-  Probabilidad: 1.00 -> GANADOR: 48
-  ----------------------------------------
-  45 vs 42
-  Probabilidad: 0.99 -> GANADOR: 45
-  ----------------------------------------
-  43 vs 46
-  Probabilidad: 0.96 -> GANADOR: 43
-  ----------------------------------------
-  45 vs 47
-  Probabilidad: 1.00 -> GANADOR: 45
-  ----------------------------------------
-  45 vs 45
-  Probabilidad: 0.98 -> GANADOR: 45
-  ----------------------------------------
-  46 vs 49
-  Probabilidad: 1.00 -> GANADOR: 49
-  ----------------------------------------
-  42 vs 43
-  Probabilidad: 0.80 -> GANADOR: 42
-  ----------------------------------------
-
-RONDA 2:
-  54 vs 45
-  Probabilidad: 1.00 -> GANADOR: 54
-  ----------------------------------------
-  43 vs 45
-  Probabilidad: 1.00 -> GANADOR: 45
-  ----------------------------------------
-  42 vs 45
-  Probabilidad: 1.00 -> GANADOR: 42
-  ----------------------------------------
-  49 vs 48
-  Probabilidad: 1.00 -> GANADOR: 49
-  ----------------------------------------
-
-SWEET 16:
-  54 vs 45
-  Probabilidad: 1.00 -> GANADOR: 54
-  ----------------------------------------
-  42 vs 49
-  Probabilidad: 1.00 -> GANADOR: 49
-  ----------------------------------------
-
-ELITE 8:
-  54 vs 49
-  Probabilidad: 1.00 -> GANADOR: 54
-  ----------------------------------------
+**************************************************
+PREDICCIONES TORNEO MASCULINO 2025
+**************************************************
 
 No hay suficientes equipos para continuar (1 restantes)
-
-Predicciones guardadas en ncaa_M_predictions_2025.csv
 
 Cargando datos para el torneo femenino...
 
-_**PREDICCIONES TORNEO FEMENINO 2025**_
-
-RONDA 1:
-  43 vs 54
-  Probabilidad: 0.98 -> GANADOR: 54
-  ----------------------------------------
-  50 vs 43
-  Probabilidad: 0.60 -> GANADOR: 43
-  ----------------------------------------
-  46 vs 46
-  Probabilidad: 0.98 -> GANADOR: 46
-  ----------------------------------------
-  44 vs 52
-  Probabilidad: 1.00 -> GANADOR: 52
-  ----------------------------------------
-  45 vs 41
-  Probabilidad: 0.95 -> GANADOR: 41
-  ----------------------------------------
-  48 vs 52
-  Probabilidad: 1.00 -> GANADOR: 48
-  ----------------------------------------
-  41 vs 38
-  Probabilidad: 1.00 -> GANADOR: 38
-  ----------------------------------------
-  44 vs 45
-  Probabilidad: 0.99 -> GANADOR: 44
-  ----------------------------------------
-
-RONDA 2:
-  44 vs 48
-  Probabilidad: 1.00 -> GANADOR: 48
-  ----------------------------------------
-  38 vs 41
-  Probabilidad: 1.00 -> GANADOR: 38
-  ----------------------------------------
-  52 vs 46
-  Probabilidad: 1.00 -> GANADOR: 52
-  ----------------------------------------
-  43 vs 54
-  Probabilidad: 0.90 -> GANADOR: 54
-  ----------------------------------------
-
-SWEET 16:
-  48 vs 38
-  Probabilidad: 1.00 -> GANADOR: 48
-  ----------------------------------------
-  52 vs 54
-  Probabilidad: 1.00 -> GANADOR: 52
-  ----------------------------------------
-
-ELITE 8:
-  48 vs 52
-  Probabilidad: 1.00 -> GANADOR: 48
-  ----------------------------------------
+**************************************************
+PREDICCIONES TORNEO FEMENINO 2025
+**************************************************
 
 No hay suficientes equipos para continuar (1 restantes)
 
-Predicciones guardadas en ncaa_W_predictions_2025.csv
+Predicciones combinadas guardadas en submission.csv
 
-_**Resumen de archivos generados:**_
+Resumen de predicciones combinadas:
+Gender    Round     Team1_Name     Team2_Name  Probability Predicted_Winner_Name
+     M  Ronda 1           Duke        Arizona     0.552244                  Duke
+     M  Ronda 1        Houston         Purdue     0.520029               Houston
+     M  Ronda 1        Florida       Maryland     0.530321              Maryland
+     M  Ronda 1         Auburn      Texas A&M     0.594417                Auburn
+     M  Ronda 1    Michigan St        Iowa St     0.565454               Iowa St
+     M  Ronda 1      St John's     Texas Tech     0.527960            Texas Tech
+     M  Ronda 1      Tennessee       Kentucky     0.558968              Kentucky
+     M  Ronda 1        Alabama      Wisconsin     0.623066               Alabama
+     M  Ronda 2           Duke        Houston     0.648415                  Duke
+     M  Ronda 2         Auburn        Alabama     0.538614                Auburn
+     M  Ronda 2     Texas Tech        Iowa St     0.538060               Iowa St
+     M  Ronda 2       Kentucky       Maryland     0.507902              Kentucky
+     M Sweet 16           Duke         Auburn     0.621982                  Duke
+     M Sweet 16        Iowa St       Kentucky     0.531995              Kentucky
+     M  Elite 8           Duke       Kentucky     0.587594                  Duke
+     F  Ronda 1 South Carolina       Maryland     0.614750              Maryland
+     F  Ronda 1          Texas        Ohio St     0.544421               Ohio St
+     F  Ronda 1            USC       Kentucky     0.558225              Kentucky
+     F  Ronda 1           UCLA         Baylor     0.591130                Baylor
+     F  Ronda 1       NC State            LSU     0.509647              NC State
+     F  Ronda 1    Connecticut       Oklahoma     0.544057           Connecticut
+     F  Ronda 1            TCU     Notre Dame     0.585883            Notre Dame
+     F  Ronda 1           Duke North Carolina     0.587293        North Carolina
+     F  Ronda 2    Connecticut       NC State     0.677322           Connecticut
+     F  Ronda 2 North Carolina     Notre Dame     0.538414        North Carolina
+     F  Ronda 2         Baylor       Kentucky     0.592432                Baylor
+     F  Ronda 2        Ohio St       Maryland     0.549821              Maryland
+     F Sweet 16    Connecticut North Carolina     0.540603           Connecticut
+     F Sweet 16         Baylor       Maryland     0.512536              Maryland
+     F  Elite 8    Connecticut       Maryland     0.542977           Connecticut
 
-- Predicciones masculinas: ncaa_M_predictions_2025.csv
-- Predicciones femeninas: ncaa_W_predictions_2025.csv
+Archivo combinado generado con éxito: submission.csv
+
+Proceso completado.
 
 Desarrollado por: J.E. Carmona Alvarez & J. Ortiz-Aguilar
+
